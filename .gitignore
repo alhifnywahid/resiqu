@@ -1,0 +1,32 @@
+# ===========================
+# ResiQu Root .gitignore
+# ===========================
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Agent / AI tooling
+.agent/
+.gemini/
+
+# Dev-only scratch files
+test-*.js
+test-*.ts
+*.scratch.*
+
+# Design system (internal reference only)
+design-system/
