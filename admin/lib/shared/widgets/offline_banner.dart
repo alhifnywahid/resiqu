@@ -19,9 +19,7 @@ class OfflineBanner extends StatelessWidget {
         curve: Curves.easeInOut,
         height: offline ? 36 : 0,
         width: double.infinity,
-        decoration: const BoxDecoration(
-          color: Color(0xFFFF8C42),
-        ),
+        decoration: const BoxDecoration(color: Color(0xFFFF8C42)),
         clipBehavior: Clip.hardEdge,
         child: const Center(
           child: Row(
@@ -30,7 +28,7 @@ class OfflineBanner extends StatelessWidget {
               Icon(Icons.cloud_off_rounded, size: 14, color: Colors.white),
               SizedBox(width: 8),
               Text(
-                'Mode Offline — data tersimpan lokal',
+                'Mode Offline - data tersimpan lokal',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 12,

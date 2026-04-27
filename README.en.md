@@ -1,17 +1,17 @@
-🌐 **Bahasa:** Indonesia | [English](README.en.md)
+🌐 **Language:** [Indonesia](README.md) | English
 
 # 📦 ResiQu - Package Transit Tracking System
 
-Sistem tracking paket transit antar pulau untuk jasa pengiriman. Terdiri dari aplikasi admin (mobile) dan website tracking publik untuk pembeli.
+Inter-island package transit tracking system for shipping services. Consists of an admin app (mobile) and a public tracking website for buyers.
 
 ## Sub-Projects
 
-| Project  | Stack                          | Deskripsi                                     |
-| -------- | ------------------------------ | --------------------------------------------- |
-| `admin/` | Flutter · GetX · Firebase      | Aplikasi admin untuk kelola paket & kontainer |
-| `buyer/` | Next.js · shadcn/ui · Firebase | Website publik untuk lacak paket              |
+| Project  | Stack                          | Description                              |
+| -------- | ------------------------------ | ---------------------------------------- |
+| `admin/` | Flutter · GetX · Firebase      | Admin app for managing packages & batches |
+| `buyer/` | Next.js · shadcn/ui · Firebase | Public website for package tracking       |
 
-## Arsitektur
+## Architecture
 
 ```
 ┌──────────────┐     ┌──────────────────┐     ┌──────────────┐
@@ -20,15 +20,15 @@ Sistem tracking paket transit antar pulau untuk jasa pengiriman. Terdiri dari ap
 └──────────────┘     └──────────────────┘     └──────────────┘
 ```
 
-Kedua aplikasi berbagi satu database **Cloud Firestore** sebagai single source of truth.
+Both apps share a single **Cloud Firestore** database as the single source of truth.
 
 ---
 
-## Prasyarat
+## Prerequisites
 
 - **Flutter SDK** ≥ 3.22
 - **Node.js** ≥ 20 + **pnpm**
-- **Firebase project** yang sudah dikonfigurasi (lihat bagian [Firebase Setup](#-firebase-setup))
+- **Firebase project** already configured (see [Firebase Setup](#-firebase-setup))
 
 ---
 
@@ -42,14 +42,14 @@ flutter pub get
 flutter run
 ```
 
-> ⚠️ Pastikan `android/app/google-services.json` sudah ada dan cocok dengan Firebase project.
+> ⚠️ Make sure `android/app/google-services.json` exists and matches your Firebase project.
 
 ### Buyer Website (Next.js)
 
 ```bash
 cd buyer
 pnpm install
-cp .env.example .env.local  # isi variabel Firebase
+cp .env.example .env.local  # fill in Firebase variables
 pnpm dev
 ```
 
@@ -57,19 +57,19 @@ pnpm dev
 
 ## Makefile Commands
 
-| Perintah               | Deskripsi                             |
+| Command                | Description                           |
 | ---------------------- | ------------------------------------- |
-| `make run-app`         | Jalankan admin app (Flutter debug)    |
-| `make run-web`         | Jalankan buyer website (Next.js dev)  |
+| `make run-app`         | Run admin app (Flutter debug)         |
+| `make run-web`         | Run buyer website (Next.js dev)       |
 | `make build-app`       | Build release APK                     |
 | `make build-web`       | Build production website              |
-| `make clean-app`       | Bersihkan cache Flutter               |
-| `make clean-web`       | Bersihkan dependencies Node.js        |
-| `make fingerprint-app` | Generate SHA-1/SHA-256 untuk Firebase |
+| `make clean-app`       | Clean Flutter cache                   |
+| `make clean-web`       | Clean Node.js dependencies            |
+| `make fingerprint-app` | Generate SHA-1/SHA-256 for Firebase   |
 
 ---
 
-## Struktur Proyek
+## Project Structure
 
 ```
 resiqu/
@@ -83,9 +83,9 @@ resiqu/
 │       │   └── utils/           # DateFormatter, StringUtils
 │       ├── features/
 │       │   ├── auth/            # Google Sign-In + allowlist
-│       │   ├── batches/         # Kontainer management
+│       │   ├── batches/         # Container management
 │       │   ├── dashboard/       # Status summary
-│       │   ├── packages/        # Paket management
+│       │   ├── packages/        # Package management
 │       │   ├── settings/        # App settings
 │       │   └── splash/          # Splash + auth check
 │       │   └── {feature}/
@@ -108,33 +108,33 @@ resiqu/
 
 ---
 
-## Fitur
+## Features
 
 ### Admin App
 
-- ✅ Login via Google (allowlist Firestore)
-- ✅ Dashboard ringkasan status paket
-- ✅ CRUD paket dengan auto-generate kode `RSQ-YYYYMMDD-XXXXXX`
-- ✅ Pengelompokan paket per nama penerima
-- ✅ Barcode/QR scanner dengan flashlight toggle
-- ✅ Manajemen kontainer/box (buat, isi paket, dispatch, arrive)
-- ✅ Update status paket + riwayat lengkap
-- ✅ Export ke Excel & PDF
+- ✅ Google login (Firestore allowlist)
+- ✅ Package status dashboard summary
+- ✅ CRUD packages with auto-generated code `RSQ-YYYYMMDD-XXXXXX`
+- ✅ Group packages by recipient name
+- ✅ Barcode/QR scanner with flashlight toggle
+- ✅ Batch/container management (create, fill, dispatch, arrive)
+- ✅ Update package status + full history
+- ✅ Export to Excel & PDF
 - ✅ Share via WhatsApp
 - ✅ Offline-first (Firestore persistence)
 
 ### Status Flow
 
 ```
-Diterima → Dalam Box → Dalam Perjalanan → Tiba di Tujuan → Selesai
-                                                        ↘ Kendala
+Received → In Container → In Transit → Arrived at Destination → Completed
+                                                              ↘ Issue
 ```
 
 ### Buyer Website
 
-- ✅ Lacak paket publik via tracking code / resi marketplace
-- ✅ Timeline status lengkap dengan waktu
-- ✅ Info kontainer terbuka (jadwal transit)
+- ✅ Track packages via tracking code / marketplace receipt
+- ✅ Full status timeline with timestamps
+- ✅ Open container info (transit schedule)
 - ✅ Responsive design + dark mode
 - ✅ SEO-optimized
 
@@ -161,40 +161,40 @@ tailwindcss, shadcn/ui, lucide-react
 
 ## 🔥 Firebase Setup
 
-### Step 1 - Buat Project
+### Step 1 - Create Project
 
-1. Buka https://console.firebase.google.com
-2. **Create Project** → nama: `ResiQu` → **Continue**
+1. Go to https://console.firebase.google.com
+2. **Create Project** → name: `ResiQu` → **Continue**
 3. Disable Google Analytics → **Create Project**
 
-### Step 2 - Aktifkan Firestore
+### Step 2 - Enable Firestore
 
 1. **Build → Firestore Database → Create Database**
-2. **Test mode** → Lokasi: `asia-southeast2` → **Enable**
+2. **Test mode** → Location: `asia-southeast2` → **Enable**
 
-### Step 3 - Aktifkan Authentication
+### Step 3 - Enable Authentication
 
 1. **Build → Authentication → Get Started**
-2. **Sign-in method** → Enable **Google** → isi email → **Save**
+2. **Sign-in method** → Enable **Google** → fill email → **Save**
 
-### Step 4 - Tambah Android App
+### Step 4 - Add Android App
 
 1. **Project Overview → ➕ Add app → Android**
 2. Package name: `id.resiqu.admin` → Register
-3. Dapatkan SHA-1:
+3. Get SHA-1:
    ```bash
    cd admin/android && ./gradlew signingReport
    ```
 4. **Project Settings → Your apps → Add fingerprint** → paste SHA-1
-5. Download `google-services.json` → taruh di `admin/android/app/`
+5. Download `google-services.json` → place in `admin/android/app/`
 
-> ⚠️ Pastikan file baru punya `oauth_client` yang **TIDAK kosong** (ada `client_type: 1`)
+> ⚠️ Make sure the new file has a non-empty `oauth_client` (contains `client_type: 1`)
 
-### Step 5 - Tambah Web App (Buyer)
+### Step 5 - Add Web App (Buyer)
 
 1. **Project Overview → ➕ Add app → Web**
 2. Nickname: `Buyer` → Register
-3. Copy config ke `buyer/.env.local`:
+3. Copy config to `buyer/.env.local`:
 
 ```env
 NEXT_PUBLIC_FIREBASE_API_KEY=...
@@ -205,25 +205,25 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
 NEXT_PUBLIC_FIREBASE_APP_ID=...
 ```
 
-### Step 6 - Buat Admin Whitelist
+### Step 6 - Create Admin Whitelist
 
-Admin whitelist menentukan siapa yang boleh login. Buat di Firestore:
+The admin whitelist determines who can log in. Create in Firestore:
 
 ```
 Collection: admins
-Document ID: emailkamu@gmail.com
+Document ID: youremail@gmail.com
 
 Fields:
-  email     (string)    → emailkamu@gmail.com
-  name      (string)    → Nama Kamu
-  createdAt (timestamp) → (tanggal sekarang)
+  email     (string)    → youremail@gmail.com
+  name      (string)    → Your Name
+  createdAt (timestamp) → (current date)
 ```
 
-> ⚠️ Document ID **HARUS** sama persis dengan email Google. App cek `admins/{email}`.
+> ⚠️ Document ID **MUST** exactly match the Google email. The app checks `admins/{email}`.
 
-### Step 7 - Pasang Security Rules
+### Step 7 - Set Security Rules
 
-Di **Firestore → Rules**, paste dan publish:
+In **Firestore → Rules**, paste and publish:
 
 ```javascript
 rules_version = '2';
@@ -264,7 +264,7 @@ service cloud.firestore {
 }
 ```
 
-**Akses per Collection:**
+**Access per Collection:**
 
 | Collection                 | Admin          | Buyer (Public) |
 | -------------------------- | -------------- | -------------- |
@@ -277,37 +277,37 @@ service cloud.firestore {
 
 ## Database Schema
 
-| Koleksi                       | Deskripsi                                                                         |
-| ----------------------------- | --------------------------------------------------------------------------------- |
-| `admins/{email}`              | Allowlist admin (email, name, createdAt)                                          |
-| `packages/{id}`               | Data paket (trackingCode, recipientName, currentStatus, batchId, dimensions, ...) |
-| `packages/{id}/statusHistory` | Riwayat status (status, note, updatedBy, timestamp)                               |
-| `batches/{id}`                | Kontainer (name, destinationCity, status, packageIds, startDate, expiryDate)      |
+| Collection                    | Description                                                                        |
+| ----------------------------- | ---------------------------------------------------------------------------------- |
+| `admins/{email}`              | Admin allowlist (email, name, createdAt)                                           |
+| `packages/{id}`               | Package data (trackingCode, recipientName, currentStatus, batchId, dimensions, ...) |
+| `packages/{id}/statusHistory` | Status history (status, note, updatedBy, timestamp)                                |
+| `batches/{id}`                | Container (name, destinationCity, status, packageIds, startDate, expiryDate)       |
 
 ---
 
 ## Troubleshooting
 
-| Masalah                       | Solusi                                                              |
-| ----------------------------- | ------------------------------------------------------------------- |
-| Google Sign-In langsung close | Cek SHA-1 sudah ditambahkan. Download ulang `google-services.json`. |
-| Login sukses tapi ditolak     | Email belum ada di collection `admins`.                             |
-| `oauth_client: []` kosong     | SHA-1 belum ditambahkan ke Firebase project.                        |
+| Problem                       | Solution                                                             |
+| ----------------------------- | -------------------------------------------------------------------- |
+| Google Sign-In closes immediately | Check SHA-1 is added. Re-download `google-services.json`.        |
+| Login succeeds but rejected   | Email not in `admins` collection.                                    |
+| `oauth_client: []` is empty   | SHA-1 not added to Firebase project.                                 |
 
 ---
 
 ## Setup Checklist
 
-- [ ] Firebase project dibuat
-- [ ] Firestore aktif (asia-southeast2)
-- [ ] Auth Google aktif
-- [ ] Android app terdaftar + SHA-1 ditambahkan
-- [ ] `google-services.json` valid (ada `oauth_client`)
-- [ ] Web app terdaftar
-- [ ] `buyer/.env.local` diisi
-- [ ] Collection `admins` dibuat
-- [ ] Security Rules di-publish
-- [ ] `flutter run` → login sukses
+- [ ] Firebase project created
+- [ ] Firestore enabled (asia-southeast2)
+- [ ] Google Auth enabled
+- [ ] Android app registered + SHA-1 added
+- [ ] `google-services.json` valid (has `oauth_client`)
+- [ ] Web app registered
+- [ ] `buyer/.env.local` filled
+- [ ] `admins` collection created
+- [ ] Security Rules published
+- [ ] `flutter run` → login succeeds
 
 ---
 

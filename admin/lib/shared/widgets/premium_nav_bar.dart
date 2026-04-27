@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Nav bar items row — used inside Scaffold's bottomNavigationBar (BottomAppBar).
+/// Nav bar items row - used inside Scaffold's bottomNavigationBar (BottomAppBar).
 /// The FAB scan button lives in Scaffold.floatingActionButton (centerDocked).
 class PremiumNavBar extends StatelessWidget {
   final int selectedIndex;

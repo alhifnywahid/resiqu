@@ -16,8 +16,8 @@ import '../../shared/widgets/main_shell.dart';
 abstract class AppRoutes {
   static const splash = '/splash';
   static const login = '/login';
-  static const shell = '/shell';    // Main app shell (home after login)
-  static const dashboard = '/shell'; // Alias — auth redirects here
+  static const shell = '/shell'; // Main app shell (home after login)
+  static const dashboard = '/shell'; // Alias - auth redirects here
   static const packageDetail = '/packages/detail';
   static const addPackage = '/packages/add';
   static const createBatch = '/batches/create';

@@ -21,11 +21,12 @@ class AuthController extends GetxController {
       if (user == null) {
         admin.value = null;
         isInitialized.value = true;
-        if (Get.currentRoute != AppRoutes.login && Get.currentRoute != AppRoutes.splash) {
+        if (Get.currentRoute != AppRoutes.login &&
+            Get.currentRoute != AppRoutes.splash) {
           Get.offAllNamed(AppRoutes.login);
         }
       } else {
-        // Restore existing session — check admin allowlist
+        // Restore existing session - check admin allowlist
         await _restoreSession(user);
         isInitialized.value = true;
       }
@@ -98,8 +99,6 @@ class AuthController extends GetxController {
   }
 
   String get adminEmail =>
-      admin.value?.email ??
-      FirebaseAuth.instance.currentUser?.email ??
-      '';
+      admin.value?.email ?? FirebaseAuth.instance.currentUser?.email ?? '';
   String get adminName => admin.value?.displayName ?? adminEmail;
 }

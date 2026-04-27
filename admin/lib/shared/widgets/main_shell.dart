@@ -34,11 +34,16 @@ class MainShell extends GetView<ShellController> {
 
   Widget _buildPage(int index) {
     switch (index) {
-      case 0: return const DashboardPage();
-      case 1: return const PackageListPage();
-      case 3: return const BatchListPage();
-      case 4: return const SettingsPage();
-      default: return const SizedBox.shrink();
+      case 0:
+        return const DashboardPage();
+      case 1:
+        return const PackageListPage();
+      case 3:
+        return const BatchListPage();
+      case 4:
+        return const SettingsPage();
+      default:
+        return const SizedBox.shrink();
     }
   }
 
@@ -65,12 +70,14 @@ class MainShell extends GetView<ShellController> {
       ),
       floatingActionButton: _ScanFab(onTap: () => _openScanner(context)),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: Obx(() => PremiumNavBar(
-            selectedIndex: controller.currentIndex.value,
-            onItemTapped: (index) {
-              if (index != 2) controller.changePage(index);
-            },
-          )),
+      bottomNavigationBar: Obx(
+        () => PremiumNavBar(
+          selectedIndex: controller.currentIndex.value,
+          onItemTapped: (index) {
+            if (index != 2) controller.changePage(index);
+          },
+        ),
+      ),
     );
   }
 
@@ -78,10 +85,10 @@ class MainShell extends GetView<ShellController> {
     final code = await showScannerSheet(context);
     if (code != null && code.isNotEmpty) {
       final controller = Get.find<PackageController>();
-      
+
       // Smart Context-Aware Routing
       final exists = await controller.checkPackageExists(code);
-      
+
       if (exists) {
         // Data found: populate search input and navigate to packages tab
         controller.pendingSearchText.value = code;
@@ -95,7 +102,7 @@ class MainShell extends GetView<ShellController> {
   }
 }
 
-/// Gradient FAB for the scan action — used as Scaffold.floatingActionButton.
+/// Gradient FAB for the scan action - used as Scaffold.floatingActionButton.
 class _ScanFab extends StatelessWidget {
   final VoidCallback onTap;
   const _ScanFab({required this.onTap});

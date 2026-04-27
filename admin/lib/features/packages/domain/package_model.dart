@@ -10,7 +10,7 @@ class PackageModel {
   final String destinationCity;
   final PackageStatus currentStatus;
   final String? batchId;
-  final Map<String, double>? dimensions; // {p, l, t} in cm — optional
+  final Map<String, double>? dimensions; // {p, l, t} in cm - optional
   final String createdBy;
   final String updatedBy;
   final DateTime createdAt;
@@ -37,7 +37,8 @@ class PackageModel {
     final l = dimensions!['l'];
     final t = dimensions!['t'];
     if (p == null || l == null || t == null) return null;
-    String fmt(double v) => v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+    String fmt(double v) =>
+        v == v.roundToDouble() ? v.toInt().toString() : v.toString();
     return '${fmt(p)} × ${fmt(l)} × ${fmt(t)} cm';
   }
 
