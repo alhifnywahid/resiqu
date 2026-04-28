@@ -203,57 +203,145 @@ class _BatchDetailPageState extends State<BatchDetailPage> {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              PopupMenuButton<String>(
-                icon: Container(
+              if (batch.status == BatchStatus.collecting) ...[
+                GestureDetector(
+                  onTap: () {
+                    Get.toNamed(AppRoutes.createBatch, arguments: {'batchToEdit': batch})?.then((_) => _loadPackages());
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.edit_rounded, color: Colors.white, size: 20),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              GestureDetector(
+                onTap: () => _showExportFormatSheet(context),
+                child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.more_vert_rounded, color: Colors.white, size: 20),
+                  child: const Icon(Icons.file_download_outlined, color: Colors.white, size: 20),
                 ),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                offset: const Offset(0, 48),
-                onSelected: (value) {
-                  if (value == 'edit') {
-                    Get.toNamed(AppRoutes.createBatch, arguments: {'batchToEdit': batch})?.then((_) => _loadPackages());
-                  } else if (value == 'export') {
-                    final sorted = List<PackageModel>.from(packages)
-                      ..sort((a, b) => a.recipientName.toLowerCase().compareTo(b.recipientName.toLowerCase()));
-                    ExportService.exportToExcel(sorted, context);
-                  }
-                },
-                itemBuilder: (_) => [
-                  if (batch.status == BatchStatus.collecting)
-                    PopupMenuItem(
-                      value: 'edit',
-                      child: Row(
-                        children: [
-                          Icon(Icons.edit_rounded, color: const Color(0xFFEAB308), size: 20),
-                          const SizedBox(width: 12),
-                          const Text('Edit Kontainer', style: TextStyle(fontWeight: FontWeight.w600)),
-                        ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showExportFormatSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 48,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(2.5),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Pilih Format Export',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                        final sorted = List<PackageModel>.from(packages)
+                          ..sort((a, b) => a.recipientName.toLowerCase().compareTo(b.recipientName.toLowerCase()));
+                        ExportService.exportBatchDetailToExcel(batch, sorted, context);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                        ),
+                        child: Column(
+                          children: [
+                            const Icon(Icons.table_chart_rounded, color: Color(0xFF10B981), size: 32),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Excel (.xlsx)',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF10B981),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  if (batch.status == BatchStatus.collecting)
-                    const PopupMenuDivider(),
-                  PopupMenuItem(
-                    value: 'export',
-                    child: Row(
-                      children: [
-                        Icon(Icons.table_chart_rounded, color: const Color(0xFF10B981), size: 20),
-                        const SizedBox(width: 12),
-                        const Text('Export (Urut Nama)', style: TextStyle(fontWeight: FontWeight.w600)),
-                      ],
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                        final sorted = List<PackageModel>.from(packages)
+                          ..sort((a, b) => a.recipientName.toLowerCase().compareTo(b.recipientName.toLowerCase()));
+                        ExportService.exportBatchDetailToPdf(batch, sorted, context);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF4444).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.3)),
+                        ),
+                        child: Column(
+                          children: [
+                            const Icon(Icons.picture_as_pdf_rounded, color: Color(0xFFEF4444), size: 32),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'PDF (.pdf)',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFFEF4444),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
