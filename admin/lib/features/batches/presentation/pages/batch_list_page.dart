@@ -3,8 +3,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/routes/app_routes.dart';
-import '../../../../core/utils/export_service.dart';
-import '../../../../shared/widgets/batch_export_filter_sheet.dart';
+import '../../../../core/utils/app_alerts.dart';
 import '../../domain/batch_model.dart';
 import '../controllers/batch_controller.dart';
 
@@ -82,50 +81,7 @@ class BatchListPage extends GetView<BatchController> {
                   ),
                   Row(
                     children: [
-                      GestureDetector(
-                        onTap: () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (ctx) => BatchExportFilterSheet(
-                              onExport: (status, startDate, endDate, format) async {
-                                var batches = controller.batches.toList();
-                                if (status != null) {
-                                  batches = batches.where((b) => b.status.value == status).toList();
-                                }
-                                if (startDate != null && endDate != null) {
-                                  batches = batches.where((b) {
-                                    final date = b.createdAt;
-                                    return date.isAfter(startDate.subtract(const Duration(days: 1))) && 
-                                           date.isBefore(endDate.add(const Duration(days: 1)));
-                                  }).toList();
-                                }
-                                if (batches.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Tidak ada data yang cocok dengan filter')),
-                                  );
-                                  return;
-                                }
-                                if (format == 'excel') {
-                                  ExportService.exportBatchesToExcel(batches, context);
-                                } else {
-                                  ExportService.exportBatchesToPdf(batches, context);
-                                }
-                              },
-                            ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.file_download_outlined, color: Colors.white, size: 20),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
+
                       // Filter button
                       GestureDetector(
                         onTap: () => _showFilterSheet(context),
@@ -421,35 +377,15 @@ class BatchListPage extends GetView<BatchController> {
 
   void _confirmDispatch(BuildContext context, BatchModel batch) {
     if (batch.status != BatchStatus.collecting) return;
-    showDialog(
+    AppAlerts.confirmSheet(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Kirim Box?'),
-        content: Text(
-          'Box "${batch.name}" akan dikirim. '
-          'Status ${batch.packageIds.length} paket akan berubah ke "Dalam Perjalanan".',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3B82F6),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              controller.dispatchBatch(batch);
-            },
-            child: const Text('Kirim'),
-          ),
-        ],
-      ),
+      title: 'Kirim Box?',
+      description: 'Box "${batch.name}" akan dikirim.\nStatus ${batch.packageIds.length} paket akan berubah ke "Dalam Perjalanan".',
+      confirmLabel: 'Kirim Sekarang',
+      icon: Icons.local_shipping_rounded,
+      onConfirm: () {
+        controller.dispatchBatch(batch);
+      },
     );
   }
 }

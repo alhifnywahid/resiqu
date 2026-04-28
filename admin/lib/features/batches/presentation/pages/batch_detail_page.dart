@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../core/routes/app_routes.dart';
+import '../../../../core/utils/export_service.dart';
+import '../../../../core/utils/app_alerts.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../../packages/domain/package_model.dart';
 import '../../../packages/data/package_repository.dart';
 import '../../data/batch_repository.dart';
 import '../../domain/batch_model.dart';
 import '../controllers/batch_controller.dart';
+import '../../../packages/presentation/controllers/package_controller.dart';
 
 class BatchDetailPage extends StatefulWidget {
   const BatchDetailPage({super.key});
@@ -24,6 +28,7 @@ class _BatchDetailPageState extends State<BatchDetailPage> {
   late BatchModel batch;
   List<PackageModel> packages = [];
   bool isLoadingPackages = true;
+  String creatorName = '';
 
   static final _dateFormat = DateFormat('dd MMM yyyy', 'id');
   static const _statusColors = {
@@ -51,8 +56,20 @@ class _BatchDetailPageState extends State<BatchDetailPage> {
       } else {
         packages = await _pkgRepo.getPackagesByIds(batch.packageIds);
       }
+      
+      try {
+        final adminDoc = await FirebaseFirestore.instance.collection('admins').doc(batch.createdBy).get();
+        if (adminDoc.exists) {
+          creatorName = adminDoc.data()?['name'] ?? batch.createdBy.split('@').first;
+        } else {
+          creatorName = batch.createdBy.split('@').first;
+        }
+      } catch (_) {
+        creatorName = batch.createdBy.split('@').first;
+      }
     } catch (_) {
       packages = [];
+      creatorName = batch.createdBy.split('@').first;
     }
     if (mounted) setState(() => isLoadingPackages = false);
   }
@@ -77,13 +94,7 @@ class _BatchDetailPageState extends State<BatchDetailPage> {
               child: Column(
                 children: [
                   const SizedBox(height: 20),
-                  _buildStatsRow(color, isExpired),
-                  const SizedBox(height: 16),
-                  if (batch.startDate != null || batch.expiryDate != null)
-                    _buildDateSection(isExpired),
-                  if (batch.startDate != null || batch.expiryDate != null)
-                    const SizedBox(height: 16),
-                  _buildInfoSection(),
+                  _buildCombinedInfoSection(color, isExpired),
                   const SizedBox(height: 24),
                   _buildPackageSection(),
                 ],
@@ -91,6 +102,44 @@ class _BatchDetailPageState extends State<BatchDetailPage> {
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: _buildBottomActions(),
+    );
+  }
+
+  Widget? _buildBottomActions() {
+    if (batch.status != BatchStatus.collecting && batch.status != BatchStatus.dispatched) {
+      return null;
+    }
+    
+    final isCollecting = batch.status == BatchStatus.collecting;
+    
+    return Container(
+      padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).padding.bottom + 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: ElevatedButton.icon(
+        onPressed: () => isCollecting ? _confirmDispatch(context) : _confirmArrive(context),
+        icon: Icon(isCollecting ? Icons.send_rounded : Icons.flight_land_rounded, color: Colors.white),
+        label: Text(
+          isCollecting ? 'Kirim Box' : 'Konfirmasi Tiba di Tujuan',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isCollecting ? const Color(0xFF3B82F6) : const Color(0xFF11998E),
+          foregroundColor: Colors.white,
+          minimumSize: const Size(double.infinity, 54),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 0,
+        ),
       ),
     );
   }
@@ -154,61 +203,53 @@ class _BatchDetailPageState extends State<BatchDetailPage> {
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
-              if (batch.status == BatchStatus.collecting)
-                GestureDetector(
-                  onTap: () => _confirmDispatch(context),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.send_rounded, color: Colors.white, size: 16),
-                        SizedBox(width: 6),
-                        Text(
-                          'Kirim Box',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
+              const SizedBox(width: 8),
+              PopupMenuButton<String>(
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
                   ),
-                )
-              else if (batch.status == BatchStatus.dispatched)
-                GestureDetector(
-                  onTap: () => _confirmArrive(context),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.flight_land_rounded, color: Colors.white, size: 16),
-                        SizedBox(width: 6),
-                        Text(
-                          'Tiba di Tujuan',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  child: const Icon(Icons.more_vert_rounded, color: Colors.white, size: 20),
                 ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                offset: const Offset(0, 48),
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    Get.toNamed(AppRoutes.createBatch, arguments: {'batchToEdit': batch})?.then((_) => _loadPackages());
+                  } else if (value == 'export') {
+                    final sorted = List<PackageModel>.from(packages)
+                      ..sort((a, b) => a.recipientName.toLowerCase().compareTo(b.recipientName.toLowerCase()));
+                    ExportService.exportToExcel(sorted, context);
+                  }
+                },
+                itemBuilder: (_) => [
+                  if (batch.status == BatchStatus.collecting)
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit_rounded, color: const Color(0xFFEAB308), size: 20),
+                          const SizedBox(width: 12),
+                          const Text('Edit Kontainer', style: TextStyle(fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+                    ),
+                  if (batch.status == BatchStatus.collecting)
+                    const PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: 'export',
+                    child: Row(
+                      children: [
+                        Icon(Icons.table_chart_rounded, color: const Color(0xFF10B981), size: 20),
+                        const SizedBox(width: 12),
+                        const Text('Export (Urut Nama)', style: TextStyle(fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ],
@@ -217,170 +258,87 @@ class _BatchDetailPageState extends State<BatchDetailPage> {
   }
 
   // ───────────────────────────────────────────────
-  // STATS ROW
+  // COMBINED INFO SECTION
   // ───────────────────────────────────────────────
-  Widget _buildStatsRow(Color color, bool isExpired) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          Expanded(
-            child: _StatTile(
-              icon: Icons.all_inbox_rounded,
-              value: '${batch.packageIds.length}',
-              label: 'Total Paket',
-              color: const Color(0xFF3B82F6),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _StatTile(
-              icon: Icons.local_shipping_rounded,
-              value: batch.statusLabel,
-              label: 'Status',
-              color: color,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _StatTile(
-              icon: Icons.calendar_today_rounded,
-              value: DateFormat('dd MMM').format(batch.createdAt),
-              label: 'Dibuat',
-              color: const Color(0xFF8B5CF6),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ───────────────────────────────────────────────
-  // DATE SECTION
-  // ───────────────────────────────────────────────
-  Widget _buildDateSection(bool isExpired) {
+  Widget _buildCombinedInfoSection(Color color, bool isExpired) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isExpired ? const Color(0xFFFECACA) : const Color(0xFFF1F5F9),
-          ),
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.date_range_rounded,
-                  size: 18,
-                  color: isExpired ? const Color(0xFFEF4444) : const Color(0xFF64748B),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'Rentang Waktu',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: isExpired ? const Color(0xFFEF4444) : const Color(0xFF475569),
-                  ),
-                ),
-                if (isExpired) ...[
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEF2F2),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Text(
-                      'EXPIRED',
-                      style: TextStyle(
-                        color: Color(0xFFEF4444),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                if (batch.startDate != null)
-                  Expanded(
-                    child: _DateChip(
-                      label: 'Mulai',
-                      date: _dateFormat.format(batch.startDate!),
-                      icon: Icons.play_circle_outline_rounded,
-                      color: const Color(0xFF10B981),
-                    ),
-                  ),
-                if (batch.startDate != null && batch.expiryDate != null)
-                  const SizedBox(width: 12),
-                if (batch.expiryDate != null)
-                  Expanded(
-                    child: _DateChip(
-                      label: 'Kadaluarsa',
-                      date: _dateFormat.format(batch.expiryDate!),
-                      icon: Icons.timer_outlined,
-                      color: isExpired ? const Color(0xFFEF4444) : const Color(0xFFFF8C42),
-                    ),
-                  ),
-              ],
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  // ───────────────────────────────────────────────
-  // INFO SECTION
-  // ───────────────────────────────────────────────
-  Widget _buildInfoSection() {
-    final creatorName = batch.createdBy.isNotEmpty
-        ? batch.createdBy.split('@').first
-        : 'Admin';
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFF1F5F9)),
-        ),
         child: Column(
           children: [
             _InfoTile(
-              icon: Icons.person_outline_rounded,
-              label: 'Dibuat oleh',
-              value: creatorName,
+              icon: Icons.lens_rounded,
+              iconColor: color,
+              label: 'Status',
+              value: batch.statusLabel,
+              valueColor: color,
+              isStatus: true,
             ),
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 10),
+              padding: EdgeInsets.symmetric(vertical: 12),
               child: Divider(height: 1, color: Color(0xFFF1F5F9)),
             ),
             _InfoTile(
-              icon: Icons.access_time_rounded,
-              label: 'Tanggal Dibuat',
-              value: _dateFormat.format(batch.createdAt),
+              icon: Icons.inventory_2_outlined,
+              iconColor: const Color(0xFF3B82F6),
+              label: 'Nama Kontainer',
+              value: batch.name,
             ),
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 10),
+              padding: EdgeInsets.symmetric(vertical: 12),
               child: Divider(height: 1, color: Color(0xFFF1F5F9)),
             ),
             _InfoTile(
               icon: Icons.pin_drop_outlined,
+              iconColor: const Color(0xFFF59E0B),
               label: 'Kota Tujuan',
               value: batch.destinationCity,
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Divider(height: 1, color: Color(0xFFF1F5F9)),
+            ),
+            _InfoTile(
+              icon: Icons.date_range_rounded,
+              iconColor: const Color(0xFF10B981),
+              label: 'Rentang Waktu',
+              value: (batch.startDate != null && batch.expiryDate != null)
+                  ? '${_dateFormat.format(batch.startDate!)} - ${_dateFormat.format(batch.expiryDate!)}'
+                  : 'Tidak ada batas waktu',
+              valueColor: isExpired ? const Color(0xFFEF4444) : null,
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Divider(height: 1, color: Color(0xFFF1F5F9)),
+            ),
+            _InfoTile(
+              icon: Icons.access_time_rounded,
+              iconColor: const Color(0xFF8B5CF6),
+              label: 'Dibuat Pada',
+              value: _dateFormat.format(batch.createdAt),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Divider(height: 1, color: Color(0xFFF1F5F9)),
+            ),
+            _InfoTile(
+              icon: Icons.person_outline_rounded,
+              iconColor: const Color(0xFF0EA5E9),
+              label: 'Dibuat Oleh',
+              value: creatorName.isEmpty ? 'Loading...' : creatorName,
             ),
           ],
         ),
@@ -495,7 +453,10 @@ class _BatchDetailPageState extends State<BatchDetailPage> {
           else
             ...packages.map((pkg) => _PackageCard(
                   pkg: pkg,
-                  onTap: () => Get.toNamed(AppRoutes.packageDetail, arguments: pkg.id),
+                  onTap: () {
+                    Get.find<PackageController>().loadPackageDetail(pkg.id);
+                    Get.toNamed(AppRoutes.packageDetail, arguments: pkg.id);
+                  },
                 )),
         ],
       ),
@@ -507,71 +468,33 @@ class _BatchDetailPageState extends State<BatchDetailPage> {
   // ───────────────────────────────────────────────
   void _confirmDispatch(BuildContext context) {
     if (batch.status != BatchStatus.collecting) return;
-    showDialog(
+    AppAlerts.confirmSheet(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Kirim Box?', style: TextStyle(fontWeight: FontWeight.w800)),
-        content: Text(
-          'Box "${batch.name}" akan dikirim ke ${batch.destinationCity}.\n'
-          'Status ${batch.packageIds.length} paket akan berubah ke "Dalam Perjalanan".',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal', style: TextStyle(color: Color(0xFF94A3B8))),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3B82F6),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              elevation: 0,
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              _batchCtrl.dispatchBatch(batch);
-              Get.back();
-            },
-            child: const Text('Kirim', style: TextStyle(fontWeight: FontWeight.w700)),
-          ),
-        ],
-      ),
+      title: 'Kirim Box?',
+      description: 'Box "${batch.name}" akan dikirim ke ${batch.destinationCity}.\nStatus ${batch.packageIds.length} paket akan berubah ke "Dalam Perjalanan".',
+      confirmLabel: 'Kirim Sekarang',
+      icon: Icons.local_shipping_rounded,
+      onConfirm: () async {
+        await _batchCtrl.dispatchBatch(batch);
+        await _loadPackages();
+      },
     );
   }
 
   void _confirmArrive(BuildContext context) {
     if (batch.status != BatchStatus.dispatched) return;
-    showDialog(
+    AppAlerts.confirmSheet(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Box Tiba?', style: TextStyle(fontWeight: FontWeight.w800)),
-        content: Text(
-          'Box "${batch.name}" tiba di ${batch.destinationCity}.\n'
-          'Status ${batch.packageIds.length} paket akan berubah ke "Tiba di Tujuan".',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal', style: TextStyle(color: Color(0xFF94A3B8))),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF11998E),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              elevation: 0,
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              _batchCtrl.arriveBatch(batch);
-              Get.back();
-            },
-            child: const Text('Konfirmasi Tiba', style: TextStyle(fontWeight: FontWeight.w700)),
-          ),
-        ],
-      ),
+      title: 'Box Tiba di Tujuan?',
+      description: 'Box "${batch.name}" telah tiba di ${batch.destinationCity}.\nStatus ${batch.packageIds.length} paket akan berubah ke "Tiba di Tujuan".',
+      confirmLabel: 'Konfirmasi Tiba',
+      confirmColor: const Color(0xFF11998E),
+      icon: Icons.flight_land_rounded,
+      iconColor: const Color(0xFF11998E),
+      onConfirm: () async {
+        await _batchCtrl.arriveBatch(batch);
+        await _loadPackages();
+      },
     );
   }
 
@@ -626,36 +549,73 @@ class _BatchDetailPageState extends State<BatchDetailPage> {
                     );
                   }
 
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: packages.length,
-                    itemBuilder: (context, index) {
-                      final pkg = packages[index];
-                      final isSelected = selectedIds.contains(pkg.id);
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
-                          border: Border.all(color: isSelected ? const Color(0xFF3B82F6) : const Color(0xFFE2E8F0)),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: ListTile(
-                          onTap: () => _batchCtrl.togglePackageSelection(pkg.id),
-                          leading: Container(
-                            width: 24,
-                            height: 24,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: isSelected ? const Color(0xFF3B82F6) : Colors.transparent,
-                              border: Border.all(color: isSelected ? const Color(0xFF3B82F6) : const Color(0xFFCBD5E1), width: 1.5),
+                  final allSelected = selectedIds.length == packages.length;
+
+                  return Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '${selectedIds.length} terpilih dari ${packages.length}',
+                              style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
                             ),
-                            child: isSelected ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
-                          ),
-                          title: Text(pkg.trackingCode, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-                          subtitle: Text(pkg.recipientName, style: const TextStyle(color: Color(0xFF64748B), fontSize: 13)),
+                            TextButton.icon(
+                              onPressed: () {
+                                if (allSelected) {
+                                  _batchCtrl.selectedPackageIds.clear();
+                                } else {
+                                  _batchCtrl.selectedPackageIds.assignAll(packages.map((p) => p.id));
+                                }
+                              },
+                              icon: Icon(
+                                allSelected ? Icons.deselect_rounded : Icons.select_all_rounded,
+                                size: 18,
+                              ),
+                              label: Text(allSelected ? 'Batal Semua' : 'Pilih Semua'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: const Color(0xFF3B82F6),
+                              ),
+                            ),
+                          ],
                         ),
-                      );
-                    },
+                      ),
+                      Expanded(
+                        child: ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          itemCount: packages.length,
+                          itemBuilder: (context, index) {
+                            final pkg = packages[index];
+                            final isSelected = selectedIds.contains(pkg.id);
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              decoration: BoxDecoration(
+                                color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
+                                border: Border.all(color: isSelected ? const Color(0xFF3B82F6) : const Color(0xFFE2E8F0)),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: ListTile(
+                                onTap: () => _batchCtrl.togglePackageSelection(pkg.id),
+                                leading: Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: isSelected ? const Color(0xFF3B82F6) : Colors.transparent,
+                                    border: Border.all(color: isSelected ? const Color(0xFF3B82F6) : const Color(0xFFCBD5E1), width: 1.5),
+                                  ),
+                                  child: isSelected ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
+                                ),
+                                title: Text(pkg.trackingCode, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                                subtitle: Text(pkg.recipientName, style: const TextStyle(color: Color(0xFF64748B), fontSize: 13)),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   );
                 }),
               ),
@@ -705,144 +665,39 @@ class _BatchDetailPageState extends State<BatchDetailPage> {
 // REUSABLE WIDGETS
 // ══════════════════════════════════════════════════
 
-class _StatTile extends StatelessWidget {
-  final IconData icon;
-  final String value;
-  final String label;
-  final Color color;
 
-  const _StatTile({
-    required this.icon,
-    required this.value,
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 18),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: color,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF94A3B8),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DateChip extends StatelessWidget {
-  final String label;
-  final String date;
-  final IconData icon;
-  final Color color;
-
-  const _DateChip({
-    required this.label,
-    required this.date,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.15)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: color.withValues(alpha: 0.7),
-                  ),
-                ),
-                Text(
-                  date,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: color,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _InfoTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+  final Color? iconColor;
+  final Color? valueColor;
+  final bool isStatus;
 
   const _InfoTile({
     required this.icon,
     required this.label,
     required this.value,
+    this.iconColor,
+    this.valueColor,
+    this.isStatus = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(10),
+            color: (iconColor ?? const Color(0xFF94A3B8)).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(icon, size: 18, color: const Color(0xFF94A3B8)),
+          child: Icon(icon, size: 20, color: iconColor ?? const Color(0xFF94A3B8)),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -850,20 +705,38 @@ class _InfoTile extends StatelessWidget {
               Text(
                 label,
                 style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                   color: Color(0xFF94A3B8),
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1E293B),
-                ),
-              ),
+              const SizedBox(height: 4),
+              isStatus
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: (valueColor ?? const Color(0xFF1E293B)).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        value,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: valueColor ?? const Color(0xFF1E293B),
+                        ),
+                      ),
+                    )
+                  : Text(
+                      value,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: valueColor ?? const Color(0xFF1E293B),
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
             ],
           ),
         ),

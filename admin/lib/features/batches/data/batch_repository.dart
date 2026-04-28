@@ -16,6 +16,17 @@ class BatchRepository {
         .map((s) => s.docs.map((d) => BatchModel.fromFirestore(d)).toList());
   }
 
+  Future<int> getBatchesCount() async {
+    try {
+      final snapshot = await _batchesRef.count().get();
+      return snapshot.count ?? 0;
+    } catch (e) {
+      // Fallback if aggregate count fails (e.g. offline)
+      final snapshot = await _batchesRef.get();
+      return snapshot.docs.length;
+    }
+  }
+
   Future<BatchModel?> getBatchById(String id) async {
     final doc = await _batchesRef.doc(id).get();
     if (!doc.exists) return null;
@@ -58,6 +69,25 @@ class BatchRepository {
 
     await writeBatch.commit();
     return batchRef.id;
+  }
+
+  Future<void> updateBatch({
+    required String id,
+    required String name,
+    required String destinationCity,
+    required String adminEmail,
+    DateTime? startDate,
+    DateTime? expiryDate,
+  }) async {
+    final batchRef = _batchesRef.doc(id);
+    await batchRef.update({
+      'name': name,
+      'destinationCity': destinationCity,
+      'updatedBy': adminEmail,
+      'updatedAt': FieldValue.serverTimestamp(),
+      'startDate': startDate != null ? Timestamp.fromDate(startDate) : FieldValue.delete(),
+      'expiryDate': expiryDate != null ? Timestamp.fromDate(expiryDate) : FieldValue.delete(),
+    });
   }
 
   Future<void> addPackagesToBatch({

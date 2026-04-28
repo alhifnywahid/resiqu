@@ -242,13 +242,15 @@ service cloud.firestore {
 
     match /packages/{packageId} {
       allow read: if true;
-      allow create, update: if isAdmin();
-      allow delete: if false;
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
 
       match /statusHistory/{historyId} {
         allow read: if true;
         allow create: if isAdmin();
-        allow update, delete: if false;
+        allow update: if false;
+        allow delete: if isAdmin();
       }
     }
 

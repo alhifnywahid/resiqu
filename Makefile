@@ -11,7 +11,7 @@ help:
 	@echo "  make fingerprint-app - Generate SHA-1 dan SHA-256 untuk Firebase"
 
 run-app:
-	cd admin && flutter run
+	cd admin && flutter run --profile
 
 run-web:
 	cd buyer && pnpm dev

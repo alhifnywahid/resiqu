@@ -3,8 +3,9 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
-
+import '../../domain/batch_model.dart';
 import '../controllers/batch_controller.dart';
+import '../../../../core/utils/app_alerts.dart';
 
 class CreateBatchPage extends StatefulWidget {
   const CreateBatchPage({super.key});
@@ -23,11 +24,21 @@ class _CreateBatchPageState extends State<CreateBatchPage> {
   
   late final BatchController controller;
   final _dateFormat = DateFormat('dd MMMM yyyy', 'id');
+  BatchModel? batchToEdit;
 
   @override
   void initState() {
     super.initState();
     controller = Get.find<BatchController>();
+    
+    final args = Get.arguments;
+    if (args is Map<String, dynamic> && args['batchToEdit'] is BatchModel) {
+      batchToEdit = args['batchToEdit'] as BatchModel;
+      nameCtrl.text = batchToEdit!.name;
+      cityCtrl.text = batchToEdit!.destinationCity;
+      startDate = batchToEdit!.startDate;
+      expiryDate = batchToEdit!.expiryDate;
+    }
   }
 
   @override
@@ -227,9 +238,9 @@ class _CreateBatchPageState extends State<CreateBatchPage> {
                   ),
                 ),
                 const SizedBox(width: 16),
-                const Text(
-                  'Buat Box Baru',
-                  style: TextStyle(
+                Text(
+                  batchToEdit != null ? 'Edit Kontainer' : 'Buat Box Baru',
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -341,20 +352,25 @@ class _CreateBatchPageState extends State<CreateBatchPage> {
                             : () {
                                 if (formKey.currentState?.validate() != true) return;
                                 if (startDate != null && expiryDate == null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Tanggal kadaluarsa wajib diisi jika tanggal mulai sudah dipilih'),
-                                      backgroundColor: Color(0xFFEF4444),
-                                    ),
-                                  );
+                                  AppAlerts.info('Tanggal kadaluarsa wajib diisi jika tanggal mulai sudah dipilih');
                                   return;
                                 }
-                                controller.createBatch(
-                                  name: nameCtrl.text.trim(),
-                                  destinationCity: cityCtrl.text.trim(),
-                                  startDate: startDate,
-                                  expiryDate: expiryDate,
-                                );
+                                if (batchToEdit != null) {
+                                  controller.updateBatch(
+                                    id: batchToEdit!.id,
+                                    name: nameCtrl.text.trim(),
+                                    destinationCity: cityCtrl.text.trim(),
+                                    startDate: startDate,
+                                    expiryDate: expiryDate,
+                                  );
+                                } else {
+                                  controller.createBatch(
+                                    name: nameCtrl.text.trim(),
+                                    destinationCity: cityCtrl.text.trim(),
+                                    startDate: startDate,
+                                    expiryDate: expiryDate,
+                                  );
+                                }
                               },
                         child: Center(
                           child: controller.isLoading.value

@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/routes/app_routes.dart';
+import '../../../../core/utils/app_alerts.dart';
+import '../../../../core/utils/export_service.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../controllers/package_controller.dart';
+import '../widgets/export_filter_by_name_sheet.dart';
 
 /// Full-page view showing all packages for a specific recipient name.
 class PackagesByNamePage extends StatelessWidget {
@@ -114,19 +117,48 @@ class PackagesByNamePage extends StatelessWidget {
                         ],
                       ),
                     ),
-                    // Add package button in header
+                    // Export button in header
                     GestureDetector(
-                      onTap: () => Get.toNamed(
-                        AppRoutes.addPackage,
-                        arguments: {'recipientName': recipientName},
-                      ),
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (ctx) {
+                            final basePkgs = controller.filteredPackages
+                                .where((p) => p.recipientName == recipientName)
+                                .toList();
+                            return ExportFilterByNameSheet(
+                              packages: basePkgs,
+                              onExport: (status, batchId, format) async {
+                                var pkgs = basePkgs;
+                                if (status != null) {
+                                  pkgs = pkgs.where((p) => p.currentStatus == status).toList();
+                                }
+                                if (batchId != null) {
+                                  pkgs = pkgs.where((p) => p.batchId == batchId).toList();
+                                }
+                                if (pkgs.isEmpty) {
+                                  AppAlerts.info('Tidak ada paket yang cocok untuk diexport');
+                                  return;
+                                }
+                                if (format == 'excel') {
+                                  ExportService.exportToExcel(pkgs, context);
+                                } else {
+                                  ExportService.exportToPdf(pkgs, context);
+                                }
+                              },
+                            );
+                          },
+                        );
+                      },
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
+                        child: const Icon(Icons.file_download_outlined, color: Colors.white, size: 22),
                       ),
                     ),
                   ],
@@ -169,7 +201,7 @@ class PackagesByNamePage extends StatelessWidget {
               return ListView.separated(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
                 itemCount: allPkgs.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                separatorBuilder: (ctx, idx) => const SizedBox(height: 8),
                 itemBuilder: (ctx, index) {
                   final pkg = allPkgs[index];
                   return GestureDetector(

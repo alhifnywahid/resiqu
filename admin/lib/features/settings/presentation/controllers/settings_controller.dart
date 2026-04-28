@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../auth/data/auth_repository.dart';
+import '../../../../core/utils/app_alerts.dart';
 
 class SettingsController extends GetxController {
   final AuthRepository _authRepo = Get.find<AuthRepository>();
@@ -23,22 +23,12 @@ class SettingsController extends GetxController {
 
   Future<void> addAdmin(String email, String name) async {
     if (email.isEmpty || !GetUtils.isEmail(email)) {
-      Get.snackbar(
-        'Error',
-        'Format email tidak valid',
-        backgroundColor: Colors.red.shade100,
-        colorText: Colors.red.shade900,
-      );
+      AppAlerts.error('Format email tidak valid');
       return;
     }
 
     if (adminList.any((a) => a['email'] == email)) {
-      Get.snackbar(
-        'Info',
-        'Email sudah terdaftar sebagai admin',
-        backgroundColor: Colors.blue.shade100,
-        colorText: Colors.blue.shade900,
-      );
+      AppAlerts.info('Email sudah terdaftar sebagai admin');
       return;
     }
 
@@ -46,19 +36,9 @@ class SettingsController extends GetxController {
     try {
       await _authRepo.addAdmin(email, name: name);
       Get.back(); // Close modal
-      Get.snackbar(
-        'Sukses',
-        'Admin berhasil ditambahkan',
-        backgroundColor: Colors.green.shade100,
-        colorText: Colors.green.shade900,
-      );
+      AppAlerts.success('Admin berhasil ditambahkan');
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Gagal menambahkan admin',
-        backgroundColor: Colors.red.shade100,
-        colorText: Colors.red.shade900,
-      );
+      AppAlerts.error('Gagal menambahkan admin');
     } finally {
       isLoading.value = false;
     }

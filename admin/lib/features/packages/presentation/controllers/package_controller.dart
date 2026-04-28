@@ -20,7 +20,6 @@ class PackageController extends GetxController {
   final RxString searchQuery = ''.obs;
   final RxnString pendingSearchText = RxnString();
   final Rx<PackageStatus?> selectedStatusFilter = Rx<PackageStatus?>(null);
-  final RxString viewMode = 'perPackage'.obs; // 'perPackage' or 'perName'
 
   List<PackageModel> get filteredPackages {
     var result = _allPackages.toList();
@@ -91,6 +90,40 @@ class PackageController extends GetxController {
     }
   }
 
+  Future<void> updatePackage({
+    required String id,
+    required String trackingCode,
+    required String recipientName,
+    String? batchId,
+    Map<String, double>? dimensions,
+  }) async {
+    isLoading.value = true;
+    try {
+      await _repo.updatePackage(
+        id: id,
+        trackingCode: trackingCode,
+        recipientName: recipientName,
+        adminEmail: _adminEmail,
+        batchId: batchId,
+        dimensions: dimensions,
+      );
+      if (selectedPackage.value?.id == id) {
+        await loadPackageDetail(id); // reload detail if currently viewed
+      }
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> deletePackage(String id) async {
+    isLoading.value = true;
+    try {
+      await _repo.deletePackage(id);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   Future<void> loadPackageDetail(String packageId) async {
     isLoading.value = true;
     try {
@@ -116,11 +149,6 @@ class PackageController extends GetxController {
   }
 
   Future<bool> checkPackageExists(String code) async {
-    try {
-      final results = await _repo.searchPackages(code);
-      return results.any((p) => p.trackingCode == code);
-    } catch (e) {
-      return false;
-    }
+    return await _repo.checkTrackingCodeExists(code);
   }
 }

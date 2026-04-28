@@ -21,7 +21,7 @@ class PackageRepository {
     final normalizedCode = trackingCode.trim().toUpperCase();
     final docRef = _packagesRef.doc();
 
-    final status = PackageStatus.received.value;
+    final status = PackageStatus.transit.value;
 
     final packageData = {
       'trackingCode': normalizedCode,
@@ -60,6 +60,51 @@ class PackageRepository {
     });
 
     return normalizedCode;
+  }
+
+  Future<bool> checkTrackingCodeExists(String trackingCode) async {
+    final normalizedCode = trackingCode.trim().toUpperCase();
+    final snapshot = await _packagesRef
+        .where('trackingCode', isEqualTo: normalizedCode)
+        .limit(1)
+        .get();
+    return snapshot.docs.isNotEmpty;
+  }
+
+  Future<void> updatePackage({
+    required String id,
+    required String trackingCode,
+    required String recipientName,
+    required String adminEmail,
+    String? batchId,
+    Map<String, double>? dimensions,
+  }) async {
+    final normalizedCode = trackingCode.trim().toUpperCase();
+    final docRef = _packagesRef.doc(id);
+
+    final updates = {
+      'trackingCode': normalizedCode,
+      'recipientName': toTitleCase(recipientName),
+      'batchId': batchId,
+      'dimensions': dimensions ?? FieldValue.delete(),
+      'updatedBy': adminEmail,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+
+    await docRef.update(updates);
+  }
+
+  Future<void> deletePackage(String id) async {
+    // Delete statusHistory subcollection first
+    final historySnapshot = await _packagesRef.doc(id).collection('statusHistory').get();
+    final writeBatch = _firestore.batch();
+    
+    for (final doc in historySnapshot.docs) {
+      writeBatch.delete(doc.reference);
+    }
+    
+    writeBatch.delete(_packagesRef.doc(id));
+    await writeBatch.commit();
   }
 
   /// Get distinct recipient names for autocomplete suggestions
@@ -129,28 +174,6 @@ class PackageRepository {
             pkg.recipientName.toLowerCase().contains(lowerQuery) ||
             pkg.trackingCode.toLowerCase().contains(lowerQuery))
         .toList();
-  }
-
-  Future<void> updatePackageStatus({
-    required String packageId,
-    required PackageStatus newStatus,
-    required String note,
-    required String adminEmail,
-  }) async {
-    final docRef = _packagesRef.doc(packageId);
-
-    await docRef.update({
-      'currentStatus': newStatus.value,
-      'updatedBy': adminEmail,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
-
-    await docRef.collection('statusHistory').add({
-      'status': newStatus.value,
-      'note': note,
-      'updatedBy': adminEmail,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
   }
 
   Stream<List<StatusHistoryModel>> getStatusHistory(String packageId) {

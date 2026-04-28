@@ -3,6 +3,7 @@ import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/package_status.dart';
+import '../../core/utils/app_alerts.dart';
 
 class ExportFilterSheet extends StatefulWidget {
   final Future<void> Function(
@@ -262,15 +263,12 @@ class _ExportFilterSheetState extends State<ExportFilterSheet> {
                 ? null
                 : () async {
                     final nav = Navigator.of(context);
-                    final sm = ScaffoldMessenger.of(context);
                     setState(() => _isExporting = true);
                     try {
                       await widget.onExport(_selectedStatus, _startDate, _endDate, _selectedFormat);
                       nav.pop();
                     } catch (e) {
-                      sm.showSnackBar(
-                        SnackBar(content: Text('Gagal export: $e')),
-                      );
+                      AppAlerts.error('Gagal export: $e', title: 'Export Gagal');
                     } finally {
                       if (mounted) setState(() => _isExporting = false);
                     }

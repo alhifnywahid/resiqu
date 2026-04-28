@@ -1,5 +1,5 @@
 enum BatchStatus {
-  collecting('collecting', 'Mengumpulkan'),
+  collecting('collecting', 'Terbuka'),
   dispatched('dispatched', 'Dikirim'),
   arrived('arrived', 'Tiba di Tujuan');
 

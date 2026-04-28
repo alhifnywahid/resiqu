@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../../../core/constants/package_status.dart';
+import '../../../../core/utils/app_alerts.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../packages/domain/package_model.dart';
 import '../../../packages/data/package_repository.dart';
@@ -60,10 +61,10 @@ class BatchController extends GetxController {
       availablePackages.value = all
           .where((p) =>
               (p.batchId == null || p.batchId!.isEmpty) &&
-              p.currentStatus == PackageStatus.received)
+              p.currentStatus == PackageStatus.transit)
           .toList();
     } catch (e) {
-      Get.snackbar('Error', 'Gagal memuat paket: $e');
+      AppAlerts.error('Gagal memuat paket: $e');
     } finally {
       isLoading.value = false;
     }
@@ -99,6 +100,29 @@ class BatchController extends GetxController {
     }
   }
 
+  Future<void> updateBatch({
+    required String id,
+    required String name,
+    required String destinationCity,
+    DateTime? startDate,
+    DateTime? expiryDate,
+  }) async {
+    isLoading.value = true;
+    try {
+      await _batchRepo.updateBatch(
+        id: id,
+        name: name,
+        destinationCity: destinationCity,
+        adminEmail: _adminEmail,
+        startDate: startDate,
+        expiryDate: expiryDate,
+      );
+      Get.back();
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   Future<bool> addPackagesToBatch(String batchId, List<String> packageIds) async {
     isLoading.value = true;
     try {
@@ -114,7 +138,7 @@ class BatchController extends GetxController {
       );
       return true;
     } catch (e) {
-      Get.snackbar('Error', 'Gagal menambahkan paket: $e');
+      AppAlerts.error('Gagal menambahkan paket: $e');
       return false;
     } finally {
       isLoading.value = false;

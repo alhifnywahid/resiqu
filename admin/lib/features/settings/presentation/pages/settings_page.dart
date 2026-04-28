@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../../core/utils/app_alerts.dart';
 import '../controllers/settings_controller.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -249,32 +250,17 @@ class SettingsPage extends StatelessWidget {
   // LOGOUT DIALOG
   // ───────────────────────────────────────────────
   void _confirmLogout(BuildContext context, AuthController auth) {
-    showDialog(
+    AppAlerts.confirmSheet(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Keluar?', style: TextStyle(fontWeight: FontWeight.w800)),
-        content: const Text('Anda akan keluar dari akun admin. Lanjutkan?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal', style: TextStyle(color: Color(0xFF94A3B8))),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              elevation: 0,
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              auth.signOut();
-            },
-            child: const Text('Keluar', style: TextStyle(fontWeight: FontWeight.w700)),
-          ),
-        ],
-      ),
+      title: 'Keluar?',
+      description: 'Anda akan keluar dari akun admin. Lanjutkan?',
+      confirmLabel: 'Keluar',
+      confirmColor: const Color(0xFFEF4444),
+      icon: Icons.logout_rounded,
+      iconColor: const Color(0xFFEF4444),
+      onConfirm: () {
+        auth.signOut();
+      },
     );
   }
 

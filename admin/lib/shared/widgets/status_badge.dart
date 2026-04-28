@@ -38,7 +38,7 @@ class StatusBadge extends StatelessWidget {
 
   (Color, IconData) _resolveStyle() {
     return switch (status) {
-      PackageStatus.received =>
+      PackageStatus.transit =>
         (Colors.blue, Icons.inbox_rounded),
       PackageStatus.inBox =>
         (Colors.indigo, Icons.inventory_2_rounded),
@@ -46,10 +46,6 @@ class StatusBadge extends StatelessWidget {
         (Colors.orange, Icons.local_shipping_rounded),
       PackageStatus.arrived =>
         (Colors.teal, Icons.location_on_rounded),
-      PackageStatus.completed =>
-        (Colors.green, Icons.check_circle_rounded),
-      PackageStatus.issue =>
-        (Colors.red, Icons.warning_rounded),
     };
   }
 }

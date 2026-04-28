@@ -85,9 +85,9 @@ class DashboardPage extends GetView<DashboardController> {
                       ),
                       const SizedBox(height: 12),
                       _PremiumStatCard(
-                        label: 'Diterima di Transit',
-                        value: controller.received.toString(),
-                        icon: Icons.inbox_rounded,
+                        label: 'Paket Tiba di Tujuan',
+                        value: controller.arrived.toString(),
+                        icon: Icons.flight_land_rounded,
                         gradient: const [
                           Color(0xFFE11D48),
                           Color(0xFFBE123C),
@@ -105,8 +105,8 @@ class DashboardPage extends GetView<DashboardController> {
                       ),
                       const SizedBox(height: 12),
                       _PremiumStatCard(
-                        label: 'Total Kontainer',
-                        value: '-',
+                        label: 'Total Box / Kontainer',
+                        value: controller.totalBatches.value.toString(),
                         icon: Icons.widgets_rounded,
                         gradient: const [
                           Color(0xFF059669),

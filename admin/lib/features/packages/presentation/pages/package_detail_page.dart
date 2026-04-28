@@ -6,6 +6,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/package_status.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/export_service.dart';
+import '../../../../core/utils/app_alerts.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../../batches/presentation/controllers/batch_controller.dart';
 import '../../../batches/domain/batch_model.dart';
@@ -697,16 +698,12 @@ class PackageDetailPage extends GetView<PackageController> {
       });
       await batch.commit();
 
-      Get.snackbar('Berhasil', 'Paket dimasukkan ke box',
-          backgroundColor: const Color(0xFF10B981), colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM, margin: const EdgeInsets.all(16));
+      AppAlerts.success('Paket dimasukkan ke box');
 
       // Refresh the package
       controller.loadPackageDetail(packageId);
     } catch (e) {
-      Get.snackbar('Gagal', 'Tidak dapat memasukkan paket: $e',
-          backgroundColor: const Color(0xFFEF4444), colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM, margin: const EdgeInsets.all(16));
+      AppAlerts.error('Tidak dapat memasukkan paket: $e', title: 'Gagal');
     }
   }
 }

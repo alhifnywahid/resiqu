@@ -1,10 +1,8 @@
 enum PackageStatus {
-  received('diterima', 'Diterima'),
+  transit('transit', 'Transit'),
   inBox('dalam_box', 'Dalam Box'),
   inTransit('dalam_perjalanan', 'Dalam Perjalanan'),
-  arrived('tiba_di_tujuan', 'Tiba di Tujuan'),
-  completed('selesai', 'Selesai'),
-  issue('kendala', 'Kendala');
+  arrived('tiba_di_tujuan', 'Tiba di Tujuan');
 
   const PackageStatus(this.value, this.label);
 
@@ -18,13 +16,14 @@ enum PackageStatus {
         // Backward compat: map old values
         switch (value) {
           case 'diterima_di_transit':
-            return PackageStatus.received;
+          case 'diterima':
+            return PackageStatus.transit;
           case 'dalam_perjalanan':
             return PackageStatus.inTransit;
           case 'tiba_di_tujuan':
             return PackageStatus.arrived;
           default:
-            return PackageStatus.received;
+            return PackageStatus.transit;
         }
       },
     );

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/utils/app_alerts.dart';
 import '../../../../shared/widgets/scanner_sheet.dart';
 import '../../../batches/presentation/controllers/batch_controller.dart';
 import '../../../batches/domain/batch_model.dart';
@@ -250,7 +251,7 @@ class _AddPackagePageState extends State<AddPackagePage> {
                                     padding: const EdgeInsets.symmetric(vertical: 4),
                                     shrinkWrap: true,
                                     itemCount: options.length,
-                                    separatorBuilder: (_, __) => const Divider(height: 1, indent: 16, endIndent: 16),
+                                    separatorBuilder: (context, index) => const Divider(height: 1, indent: 16, endIndent: 16),
                                     itemBuilder: (context, index) {
                                       final option = options.elementAt(index);
                                       return ListTile(
@@ -501,23 +502,9 @@ class _AddPackagePageState extends State<AddPackagePage> {
                                       dimensions: _parseDimensions(),
                                     );
                                     Get.back();
-                                    Get.snackbar(
-                                      'Sukses',
-                                      'Paket berhasil ditambahkan',
-                                      backgroundColor: const Color(0xFF10B981),
-                                      colorText: Colors.white,
-                                      snackPosition: SnackPosition.BOTTOM,
-                                      margin: const EdgeInsets.all(16),
-                                    );
+                                    AppAlerts.success('Paket berhasil ditambahkan');
                                   } catch (e) {
-                                    Get.snackbar(
-                                      'Gagal Menyimpan',
-                                      e.toString(),
-                                      backgroundColor: const Color(0xFFEF4444),
-                                      colorText: Colors.white,
-                                      snackPosition: SnackPosition.BOTTOM,
-                                      margin: const EdgeInsets.all(16),
-                                    );
+                                    AppAlerts.error(e.toString(), title: 'Gagal Menyimpan');
                                   }
                                 },
                           child: Center(
@@ -581,40 +568,5 @@ class _AddPackagePageState extends State<AddPackagePage> {
     );
   }
 
-  Widget _buildPremiumField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required IconData icon,
-    TextInputType? keyboardType,
-    String? Function(String?)? validator,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      validator: validator,
-      style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF1E293B), fontSize: 14),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 14),
-        hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 1.5),
-        ),
-        prefixIcon: Icon(icon, color: const Color(0xFF94A3B8), size: 20),
-      ),
-    );
-  }
+
 }
