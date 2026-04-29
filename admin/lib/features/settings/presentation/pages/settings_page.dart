@@ -258,8 +258,8 @@ class SettingsPage extends StatelessWidget {
       confirmColor: const Color(0xFFEF4444),
       icon: Icons.logout_rounded,
       iconColor: const Color(0xFFEF4444),
-      onConfirm: () {
-        auth.signOut();
+      onConfirm: () async {
+        await auth.signOut();
       },
     );
   }

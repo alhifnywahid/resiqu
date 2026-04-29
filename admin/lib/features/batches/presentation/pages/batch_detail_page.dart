@@ -58,9 +58,14 @@ class _BatchDetailPageState extends State<BatchDetailPage> {
       }
       
       try {
-        final adminDoc = await FirebaseFirestore.instance.collection('admins').doc(batch.createdBy).get();
+        DocumentSnapshot adminDoc;
+        try {
+          adminDoc = await FirebaseFirestore.instance.collection('admins').doc(batch.createdBy).get(const GetOptions(source: Source.serverAndCache));
+        } catch (_) {
+          adminDoc = await FirebaseFirestore.instance.collection('admins').doc(batch.createdBy).get(const GetOptions(source: Source.cache));
+        }
         if (adminDoc.exists) {
-          creatorName = adminDoc.data()?['name'] ?? batch.createdBy.split('@').first;
+          creatorName = (adminDoc.data() as Map<String, dynamic>?)?['name'] ?? batch.createdBy.split('@').first;
         } else {
           creatorName = batch.createdBy.split('@').first;
         }
@@ -427,6 +432,27 @@ class _BatchDetailPageState extends State<BatchDetailPage> {
               iconColor: const Color(0xFF0EA5E9),
               label: 'Dibuat Oleh',
               value: creatorName.isEmpty ? 'Loading...' : creatorName,
+            ),
+            const Padding(
+              padding: EdgeInsets.only(top: 16),
+              child: Divider(height: 1, color: Color(0xFFF1F5F9)),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Get.toNamed(AppRoutes.createBatch, arguments: {'batchToEdit': batch})?.then((_) => _loadPackages());
+                },
+                icon: const Icon(Icons.edit_rounded, size: 18),
+                label: const Text('Edit Kontainer', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF3B82F6),
+                  side: const BorderSide(color: Color(0xFF3B82F6), width: 1.5),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
             ),
           ],
         ),

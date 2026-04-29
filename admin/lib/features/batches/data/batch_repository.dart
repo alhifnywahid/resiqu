@@ -9,6 +9,24 @@ class BatchRepository {
   CollectionReference get _batchesRef => _firestore.collection('batches');
   CollectionReference get _packagesRef => _firestore.collection('packages');
 
+  /// Safely get a query snapshot: tries server first, falls back to cache.
+  Future<QuerySnapshot> _safeGet(Query query) async {
+    try {
+      return await query.get(const GetOptions(source: Source.serverAndCache));
+    } catch (_) {
+      return await query.get(const GetOptions(source: Source.cache));
+    }
+  }
+
+  /// Safely get a single document: tries server first, falls back to cache.
+  Future<DocumentSnapshot> _safeGetDoc(DocumentReference ref) async {
+    try {
+      return await ref.get(const GetOptions(source: Source.serverAndCache));
+    } catch (_) {
+      return await ref.get(const GetOptions(source: Source.cache));
+    }
+  }
+
   Stream<List<BatchModel>> getBatchesStream() {
     return _batchesRef
         .orderBy('createdAt', descending: true)
@@ -22,13 +40,13 @@ class BatchRepository {
       return snapshot.count ?? 0;
     } catch (e) {
       // Fallback if aggregate count fails (e.g. offline)
-      final snapshot = await _batchesRef.get();
+      final snapshot = await _safeGet(_batchesRef);
       return snapshot.docs.length;
     }
   }
 
   Future<BatchModel?> getBatchById(String id) async {
-    final doc = await _batchesRef.doc(id).get();
+    final doc = await _safeGetDoc(_batchesRef.doc(id));
     if (!doc.exists) return null;
     return BatchModel.fromFirestore(doc);
   }

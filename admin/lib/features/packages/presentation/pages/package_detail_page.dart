@@ -410,43 +410,44 @@ class PackageDetailPage extends GetView<PackageController> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             offset: const Offset(0, 48),
                             onSelected: (value) {
-                              if (value == 'share') {
-                                ExportService.shareGeneral(pkg);
-                              } else if (value == 'pdf') {
-                                ExportService.exportToPdf([pkg], context);
-                              } else if (value == 'excel') {
-                                ExportService.exportToExcel([pkg], context);
+                              if (value == 'edit') {
+                                _showEditPackageSheet(context, pkg);
+                              } else if (value == 'delete') {
+                                _confirmDeletePackage(context, pkg);
+                              } else if (value == 'export') {
+                                _showExportFormatSheet(context, pkg);
                               }
                             },
                             itemBuilder: (_) => [
                               PopupMenuItem(
-                                value: 'share',
+                                value: 'edit',
                                 child: Row(
                                   children: [
-                                    Icon(Icons.share_rounded, color: const Color(0xFF3B82F6), size: 20),
+                                    Icon(Icons.edit_rounded, color: const Color(0xFFEAB308), size: 20),
                                     const SizedBox(width: 12),
-                                    const Text('Bagikan', style: TextStyle(fontWeight: FontWeight.w600)),
+                                    const Text('Edit Paket', style: TextStyle(fontWeight: FontWeight.w600)),
                                   ],
                                 ),
                               ),
                               const PopupMenuDivider(),
                               PopupMenuItem(
-                                value: 'pdf',
+                                value: 'delete',
                                 child: Row(
                                   children: [
-                                    Icon(Icons.picture_as_pdf_rounded, color: const Color(0xFFEF4444), size: 20),
+                                    Icon(Icons.delete_outline_rounded, color: const Color(0xFFEF4444), size: 20),
                                     const SizedBox(width: 12),
-                                    const Text(AppStrings.exportPdf, style: TextStyle(fontWeight: FontWeight.w600)),
+                                    const Text('Hapus Paket', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFEF4444))),
                                   ],
                                 ),
                               ),
+                              const PopupMenuDivider(),
                               PopupMenuItem(
-                                value: 'excel',
+                                value: 'export',
                                 child: Row(
                                   children: [
-                                    Icon(Icons.table_chart_rounded, color: const Color(0xFF10B981), size: 20),
+                                    Icon(Icons.file_download_outlined, color: const Color(0xFF3B82F6), size: 20),
                                     const SizedBox(width: 12),
-                                    const Text(AppStrings.exportExcel, style: TextStyle(fontWeight: FontWeight.w600)),
+                                    const Text('Export Paket', style: TextStyle(fontWeight: FontWeight.w600)),
                                   ],
                                 ),
                               ),
@@ -461,6 +462,302 @@ class PackageDetailPage extends GetView<PackageController> {
             ],
           );
       }),
+    );
+  }
+
+  void _showExportFormatSheet(BuildContext context, dynamic pkg) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 48,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(2.5),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Pilih Format Export',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                        ExportService.exportToExcel([pkg], context);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                        ),
+                        child: const Column(
+                          children: [
+                            Icon(Icons.table_chart_rounded, color: Color(0xFF10B981), size: 32),
+                            SizedBox(height: 8),
+                            Text(
+                              'Excel (.xlsx)',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF10B981),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                        ExportService.exportToPdf([pkg], context);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF4444).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.3)),
+                        ),
+                        child: const Column(
+                          children: [
+                            Icon(Icons.picture_as_pdf_rounded, color: Color(0xFFEF4444), size: 32),
+                            SizedBox(height: 8),
+                            Text(
+                              'PDF (.pdf)',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFFEF4444),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showEditPackageSheet(BuildContext context, dynamic pkg) {
+    final resiCtrl = TextEditingController(text: pkg.trackingCode);
+    final nameCtrl = TextEditingController(text: pkg.recipientName);
+    final pCtrl = TextEditingController(text: pkg.dimensions?['p']?.toString() ?? '');
+    final lCtrl = TextEditingController(text: pkg.dimensions?['l']?.toString() ?? '');
+    final tCtrl = TextEditingController(text: pkg.dimensions?['t']?.toString() ?? '');
+    final formKey = GlobalKey<FormState>();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.75,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+          child: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 48,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE2E8F0),
+                        borderRadius: BorderRadius.circular(2.5),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Edit Paket',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  TextFormField(
+                    controller: resiCtrl,
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                    decoration: InputDecoration(
+                      labelText: 'Nomor Resi',
+                      prefixIcon: const Icon(Icons.receipt_long_rounded, size: 20, color: Color(0xFF94A3B8)),
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 1.5)),
+                    ),
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Wajib diisi' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: nameCtrl,
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                    decoration: InputDecoration(
+                      labelText: 'Nama Penerima',
+                      prefixIcon: const Icon(Icons.person_rounded, size: 20, color: Color(0xFF94A3B8)),
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 1.5)),
+                    ),
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Wajib diisi' : null,
+                  ),
+                  const SizedBox(height: 20),
+                  const Text('Ukuran (opsional)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(child: _buildDimField(pCtrl, 'P')),
+                      const SizedBox(width: 8),
+                      const Text('×', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF94A3B8))),
+                      const SizedBox(width: 8),
+                      Expanded(child: _buildDimField(lCtrl, 'L')),
+                      const SizedBox(width: 8),
+                      const Text('×', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF94A3B8))),
+                      const SizedBox(width: 8),
+                      Expanded(child: _buildDimField(tCtrl, 'T')),
+                      const SizedBox(width: 8),
+                      const Text('cm', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF94A3B8))),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (formKey.currentState?.validate() != true) return;
+                        Map<String, double>? dims;
+                        final p = double.tryParse(pCtrl.text);
+                        final l = double.tryParse(lCtrl.text);
+                        final t = double.tryParse(tCtrl.text);
+                        if (p != null && l != null && t != null) {
+                          dims = {'p': p, 'l': l, 't': t};
+                        }
+                        Navigator.pop(context);
+                        try {
+                          await controller.updatePackage(
+                            id: pkg.id,
+                            trackingCode: resiCtrl.text.trim(),
+                            recipientName: nameCtrl.text.trim(),
+                            batchId: pkg.batchId,
+                            dimensions: dims,
+                          );
+                          AppAlerts.success('Paket berhasil diperbarui');
+                        } catch (e) {
+                          AppAlerts.error(e.toString(), title: 'Gagal');
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF3B82F6),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        elevation: 0,
+                      ),
+                      child: const Text('Simpan Perubahan', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDimField(TextEditingController ctrl, String label) {
+    return TextFormField(
+      controller: ctrl,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      textAlign: TextAlign.center,
+      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+        filled: true,
+        fillColor: const Color(0xFFF8FAFC),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 1.5)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      ),
+    );
+  }
+
+  void _confirmDeletePackage(BuildContext context, dynamic pkg) {
+    AppAlerts.confirmSheet(
+      context: context,
+      title: 'Hapus Paket',
+      description: 'Yakin ingin menghapus paket "${pkg.trackingCode}"? Data riwayat juga akan dihapus dan tidak dapat dikembalikan.',
+      confirmLabel: 'Hapus',
+      confirmColor: const Color(0xFFEF4444),
+      icon: Icons.delete_outline_rounded,
+      iconColor: const Color(0xFFEF4444),
+      onConfirm: () async {
+        try {
+          // If package is in a batch, remove from batch's packageIds
+          if (pkg.batchId != null && pkg.batchId!.isNotEmpty) {
+            await FirebaseFirestore.instance.collection('batches').doc(pkg.batchId).update({
+              'packageIds': FieldValue.arrayRemove([pkg.id]),
+            });
+          }
+          await controller.deletePackage(pkg.id);
+          // Navigate back FIRST, then show success alert
+          Get.back();
+          Future.delayed(const Duration(milliseconds: 200), () {
+            AppAlerts.success('Paket berhasil dihapus');
+          });
+        } catch (e) {
+          AppAlerts.error(e.toString(), title: 'Gagal Menghapus');
+        }
+      },
     );
   }
 

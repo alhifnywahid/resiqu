@@ -10,7 +10,6 @@ import 'package:get/get.dart';
 class ConnectivityService extends GetxService {
   final _connectivity = Connectivity();
   final RxBool isOnline = true.obs;
-  final RxBool hasPendingWrites = false.obs;
   StreamSubscription? _sub;
 
   @override

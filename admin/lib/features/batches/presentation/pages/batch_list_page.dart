@@ -383,8 +383,8 @@ class BatchListPage extends GetView<BatchController> {
       description: 'Box "${batch.name}" akan dikirim.\nStatus ${batch.packageIds.length} paket akan berubah ke "Dalam Perjalanan".',
       confirmLabel: 'Kirim Sekarang',
       icon: Icons.local_shipping_rounded,
-      onConfirm: () {
-        controller.dispatchBatch(batch);
+      onConfirm: () async {
+        await controller.dispatchBatch(batch);
       },
     );
   }

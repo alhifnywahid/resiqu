@@ -10,6 +10,24 @@ class PackageRepository {
 
   CollectionReference get _packagesRef => _firestore.collection('packages');
 
+  /// Safely get a query snapshot: tries server first, falls back to cache.
+  Future<QuerySnapshot> _safeGet(Query query) async {
+    try {
+      return await query.get(const GetOptions(source: Source.serverAndCache));
+    } catch (_) {
+      return await query.get(const GetOptions(source: Source.cache));
+    }
+  }
+
+  /// Safely get a single document: tries server first, falls back to cache.
+  Future<DocumentSnapshot> _safeGetDoc(DocumentReference ref) async {
+    try {
+      return await ref.get(const GetOptions(source: Source.serverAndCache));
+    } catch (_) {
+      return await ref.get(const GetOptions(source: Source.cache));
+    }
+  }
+
 
   Future<String> addPackage({
     required String trackingCode,
@@ -64,10 +82,9 @@ class PackageRepository {
 
   Future<bool> checkTrackingCodeExists(String trackingCode) async {
     final normalizedCode = trackingCode.trim().toUpperCase();
-    final snapshot = await _packagesRef
-        .where('trackingCode', isEqualTo: normalizedCode)
-        .limit(1)
-        .get();
+    final snapshot = await _safeGet(
+      _packagesRef.where('trackingCode', isEqualTo: normalizedCode).limit(1),
+    );
     return snapshot.docs.isNotEmpty;
   }
 
@@ -96,7 +113,9 @@ class PackageRepository {
 
   Future<void> deletePackage(String id) async {
     // Delete statusHistory subcollection first
-    final historySnapshot = await _packagesRef.doc(id).collection('statusHistory').get();
+    final historySnapshot = await _safeGet(
+      _packagesRef.doc(id).collection('statusHistory'),
+    );
     final writeBatch = _firestore.batch();
     
     for (final doc in historySnapshot.docs) {
@@ -109,7 +128,7 @@ class PackageRepository {
 
   /// Get distinct recipient names for autocomplete suggestions
   Future<List<String>> getDistinctRecipientNames() async {
-    final snapshot = await _packagesRef.get();
+    final snapshot = await _safeGet(_packagesRef);
     final names = <String>{};
     for (final doc in snapshot.docs) {
       final data = doc.data() as Map<String, dynamic>?;
@@ -131,7 +150,7 @@ class PackageRepository {
   }
 
   Future<PackageModel?> getPackageById(String id) async {
-    final doc = await _packagesRef.doc(id).get();
+    final doc = await _safeGetDoc(_packagesRef.doc(id));
     if (!doc.exists) return null;
     return PackageModel.fromFirestore(doc);
   }
@@ -139,14 +158,14 @@ class PackageRepository {
   Future<List<PackageModel>> searchPackages(String query) async {
     // Return all packages when query is empty (used by batch selection)
     if (query.isEmpty) {
-      final all = await _packagesRef.orderBy('createdAt', descending: true).get();
+      final all = await _safeGet(_packagesRef.orderBy('createdAt', descending: true));
       return all.docs.map((doc) => PackageModel.fromFirestore(doc)).toList();
     }
 
     // Search by tracking code first
-    final byTracking = await _packagesRef
-        .where('trackingCode', isEqualTo: query.toUpperCase())
-        .get();
+    final byTracking = await _safeGet(
+      _packagesRef.where('trackingCode', isEqualTo: query.toUpperCase()),
+    );
 
     if (byTracking.docs.isNotEmpty) {
       return byTracking.docs
@@ -155,9 +174,9 @@ class PackageRepository {
     }
 
     // Fallback: search by trackingCode with original case
-    final byResi = await _packagesRef
-        .where('trackingCode', isEqualTo: query)
-        .get();
+    final byResi = await _safeGet(
+      _packagesRef.where('trackingCode', isEqualTo: query),
+    );
 
     if (byResi.docs.isNotEmpty) {
       return byResi.docs
@@ -166,7 +185,7 @@ class PackageRepository {
     }
 
     // Fallback: get all and filter client-side (MVP approach)
-    final all = await _packagesRef.get();
+    final all = await _safeGet(_packagesRef);
     final lowerQuery = query.toLowerCase();
     return all.docs
         .map((doc) => PackageModel.fromFirestore(doc))
@@ -188,7 +207,7 @@ class PackageRepository {
   }
 
   Future<Map<String, int>> getStatusCounts() async {
-    final snapshot = await _packagesRef.get();
+    final snapshot = await _safeGet(_packagesRef);
     final counts = <String, int>{};
 
     for (final status in PackageStatus.values) {
@@ -216,9 +235,9 @@ class PackageRepository {
     }
 
     for (final chunk in chunks) {
-      final snapshot = await _packagesRef
-          .where(FieldPath.documentId, whereIn: chunk)
-          .get();
+      final snapshot = await _safeGet(
+        _packagesRef.where(FieldPath.documentId, whereIn: chunk),
+      );
       results.addAll(
         snapshot.docs.map((doc) => PackageModel.fromFirestore(doc)),
       );

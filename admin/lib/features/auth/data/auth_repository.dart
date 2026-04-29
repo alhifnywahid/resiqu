@@ -9,6 +9,15 @@ class AuthRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
+  /// Safely get a single document: tries server first, falls back to cache.
+  Future<DocumentSnapshot> _safeGetDoc(DocumentReference ref) async {
+    try {
+      return await ref.get(const GetOptions(source: Source.serverAndCache));
+    } catch (_) {
+      return await ref.get(const GetOptions(source: Source.cache));
+    }
+  }
+
   User? get currentUser => _auth.currentUser;
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
@@ -36,14 +45,14 @@ class AuthRepository {
   }
 
   Future<bool> isAllowedAdmin(String email) async {
-    final doc = await _firestore.collection('admins').doc(email).get();
+    final doc = await _safeGetDoc(_firestore.collection('admins').doc(email));
     return doc.exists;
   }
 
   Future<String?> getAdminName(String email) async {
-    final doc = await _firestore.collection('admins').doc(email).get();
+    final doc = await _safeGetDoc(_firestore.collection('admins').doc(email));
     if (!doc.exists) return null;
-    final data = doc.data();
+    final data = doc.data() as Map<String, dynamic>?;
     return (data?['name'] as String?)?.isNotEmpty == true ? data!['name'] as String : null;
   }
 

@@ -70,7 +70,7 @@ class AppAlerts {
     required String title,
     required String description,
     required String confirmLabel,
-    required VoidCallback onConfirm,
+    required Future<void> Function() onConfirm,
     Color confirmColor = const Color(0xFF3B82F6),
     IconData icon = Icons.help_outline_rounded,
     Color iconColor = const Color(0xFF3B82F6),
@@ -155,9 +155,9 @@ class AppAlerts {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         shadowColor: confirmColor.withValues(alpha: 0.5),
                       ),
-                      onPressed: () {
+                      onPressed: () async {
                         Navigator.pop(context);
-                        onConfirm();
+                        await onConfirm();
                       },
                       child: Text(confirmLabel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                     ),
