@@ -504,7 +504,8 @@ class _AddPackagePageState extends State<AddPackagePage> {
                                     Get.back();
                                     AppAlerts.success('Paket berhasil ditambahkan');
                                   } catch (e) {
-                                    AppAlerts.error(e.toString(), title: 'Gagal Menyimpan');
+                                    final msg = e.toString().replaceFirst('Exception: ', '');
+                                    AppAlerts.error(msg, title: 'Gagal Menyimpan');
                                   }
                                 },
                           child: Center(

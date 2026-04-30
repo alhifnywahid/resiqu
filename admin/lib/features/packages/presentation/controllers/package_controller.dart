@@ -77,6 +77,12 @@ class PackageController extends GetxController {
   }) async {
     isLoading.value = true;
     try {
+      // Check for duplicate tracking code first
+      final exists = await _repo.checkTrackingCodeExists(trackingCode);
+      if (exists) {
+        throw Exception('Nomor resi "$trackingCode" sudah terdaftar');
+      }
+
       final result = await _repo.addPackage(
         trackingCode: trackingCode,
         recipientName: recipientName,
