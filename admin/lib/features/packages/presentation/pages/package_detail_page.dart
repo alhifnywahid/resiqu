@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -11,7 +10,6 @@ import '../../../../shared/widgets/status_badge.dart';
 import '../../../batches/presentation/controllers/batch_controller.dart';
 import '../../../batches/domain/batch_model.dart';
 import '../../../settings/presentation/controllers/settings_controller.dart';
-import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../controllers/package_controller.dart';
 
 class PackageDetailPage extends GetView<PackageController> {
@@ -743,13 +741,7 @@ class PackageDetailPage extends GetView<PackageController> {
       iconColor: const Color(0xFFEF4444),
       onConfirm: () async {
         try {
-          // If package is in a batch, remove from batch's packageIds
-          if (pkg.batchId != null && pkg.batchId!.isNotEmpty) {
-            await FirebaseFirestore.instance.collection('batches').doc(pkg.batchId).update({
-              'packageIds': FieldValue.arrayRemove([pkg.id]),
-            });
-          }
-          await controller.deletePackage(pkg.id);
+          await controller.deletePackage(pkg.id, batchId: pkg.batchId);
           // Navigate back FIRST, then show success alert
           Get.back();
           Future.delayed(const Duration(milliseconds: 200), () {
@@ -970,36 +962,13 @@ class PackageDetailPage extends GetView<PackageController> {
 
   Future<void> _assignPackageToBatch(String packageId, String batchId) async {
     try {
-      final firestore = FirebaseFirestore.instance;
-      final authCtrl = Get.find<AuthController>();
-      final email = authCtrl.adminEmail;
-      if (email.isEmpty) {
-        throw Exception('Sesi admin tidak valid atau email kosong.');
+      final batchCtrl = Get.find<BatchController>();
+      final success = await batchCtrl.addPackagesToBatch(batchId, [packageId]);
+      
+      if (success) {
+        AppAlerts.success('Paket dimasukkan ke box');
+        await controller.loadPackageDetail(packageId);
       }
-
-      final batch = firestore.batch();
-      final packageRef = firestore.collection('packages').doc(packageId);
-      batch.update(packageRef, {
-        'batchId': batchId,
-        'currentStatus': PackageStatus.inBox.value,
-        'updatedBy': email, // Exact match with token
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-      batch.update(firestore.collection('batches').doc(batchId), {
-        'packageIds': FieldValue.arrayUnion([packageId]),
-      });
-      batch.set(packageRef.collection('statusHistory').doc(), {
-        'status': PackageStatus.inBox.value,
-        'note': 'Paket dimasukkan ke dalam kontainer/box',
-        'updatedBy': email,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-      await batch.commit();
-
-      AppAlerts.success('Paket dimasukkan ke box');
-
-      // Refresh the package
-      controller.loadPackageDetail(packageId);
     } catch (e) {
       AppAlerts.error('Tidak dapat memasukkan paket: $e', title: 'Gagal');
     }

@@ -127,10 +127,10 @@ class PackageController extends GetxController {
     }
   }
 
-  Future<void> deletePackage(String id) async {
+  Future<void> deletePackage(String id, {String? batchId}) async {
     isLoading.value = true;
     try {
-      await _repo.deletePackage(id);
+      await _repo.deletePackage(id, batchId: batchId);
     } finally {
       isLoading.value = false;
     }

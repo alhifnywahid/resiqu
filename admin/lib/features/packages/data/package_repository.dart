@@ -114,7 +114,7 @@ class PackageRepository {
     await docRef.update(updates);
   }
 
-  Future<void> deletePackage(String id) async {
+  Future<void> deletePackage(String id, {String? batchId}) async {
     // Delete statusHistory subcollection first
     final historySnapshot = await _safeGet(
       _packagesRef.doc(id).collection('statusHistory'),
@@ -125,6 +125,13 @@ class PackageRepository {
       writeBatch.delete(doc.reference);
     }
     
+    // If package belongs to a batch, remove it atomically
+    if (batchId != null && batchId.isNotEmpty) {
+      writeBatch.update(_firestore.collection('batches').doc(batchId), {
+        'packageIds': FieldValue.arrayRemove([id]),
+      });
+    }
+
     writeBatch.delete(_packagesRef.doc(id));
     await writeBatch.commit();
   }
