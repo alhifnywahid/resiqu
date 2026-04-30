@@ -80,11 +80,14 @@ class PackageRepository {
     return normalizedCode;
   }
 
-  Future<bool> checkTrackingCodeExists(String trackingCode) async {
+  Future<bool> checkTrackingCodeExists(String trackingCode, {String? excludeId}) async {
     final normalizedCode = trackingCode.trim().toUpperCase();
     final snapshot = await _safeGet(
-      _packagesRef.where('trackingCode', isEqualTo: normalizedCode).limit(1),
+      _packagesRef.where('trackingCode', isEqualTo: normalizedCode).limit(10),
     );
+    if (excludeId != null) {
+      return snapshot.docs.any((doc) => doc.id != excludeId);
+    }
     return snapshot.docs.isNotEmpty;
   }
 

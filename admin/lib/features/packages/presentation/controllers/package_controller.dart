@@ -105,6 +105,12 @@ class PackageController extends GetxController {
   }) async {
     isLoading.value = true;
     try {
+      // Check for duplicate tracking code (exclude current package)
+      final exists = await _repo.checkTrackingCodeExists(trackingCode, excludeId: id);
+      if (exists) {
+        throw Exception('Nomor resi "$trackingCode" sudah digunakan paket lain');
+      }
+
       await _repo.updatePackage(
         id: id,
         trackingCode: trackingCode,

@@ -691,7 +691,8 @@ class PackageDetailPage extends GetView<PackageController> {
                           );
                           AppAlerts.success('Paket berhasil diperbarui');
                         } catch (e) {
-                          AppAlerts.error(e.toString(), title: 'Gagal');
+                          final msg = e.toString().replaceFirst('Exception: ', '');
+                          AppAlerts.error(msg, title: 'Gagal');
                         }
                       },
                       style: ElevatedButton.styleFrom(
