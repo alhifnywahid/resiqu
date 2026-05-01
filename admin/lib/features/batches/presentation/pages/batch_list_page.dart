@@ -164,53 +164,6 @@ class BatchListPage extends GetView<BatchController> {
               ),
             ),
 
-            // ── Active Filter Indicator ──
-            Obx(() {
-              final filter = controller.selectedStatusFilter.value;
-              if (filter == null) return const SizedBox.shrink();
-              final statusMap = {
-                'open': 'Terbuka',
-                'dispatched': 'Dikirim',
-                'arrived': 'Tiba di Tujuan',
-              };
-              return Transform.translate(
-                offset: const Offset(0, -16),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFBFDBFE)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.filter_alt_rounded, size: 14, color: Color(0xFF3B82F6)),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Filter: ${statusMap[filter] ?? filter}',
-                          style: const TextStyle(color: Color(0xFF1E40AF), fontSize: 13, fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () => controller.selectedStatusFilter.value = null,
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF3B82F6).withValues(alpha: 0.15),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.close_rounded, size: 14, color: Color(0xFF3B82F6)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }),
 
             // ── Box List ──
             Expanded(
@@ -289,7 +242,7 @@ class BatchListPage extends GetView<BatchController> {
 
   void _showFilterSheet(BuildContext context) {
     final statusMap = {
-      'open': ('Terbuka', Icons.lock_open_rounded),
+      'collecting': ('Terbuka', Icons.lock_open_rounded),
       'dispatched': ('Dikirim', Icons.local_shipping_rounded),
       'arrived': ('Tiba di Tujuan', Icons.check_circle_rounded),
     };

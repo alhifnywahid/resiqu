@@ -45,6 +45,24 @@ class BatchRepository {
     }
   }
 
+  Future<Map<String, int>> getBatchStatusCounts() async {
+    final snapshot = await _safeGet(_batchesRef);
+    final counts = <String, int>{
+      'collecting': 0,
+      'dispatched': 0,
+      'arrived': 0,
+    };
+
+    for (final doc in snapshot.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final status = data['status'] as String? ?? '';
+      counts[status] = (counts[status] ?? 0) + 1;
+    }
+
+    return counts;
+  }
+
+
   Future<BatchModel?> getBatchById(String id) async {
     final doc = await _safeGetDoc(_batchesRef.doc(id));
     if (!doc.exists) return null;
@@ -206,5 +224,38 @@ class BatchRepository {
         'timestamp': FieldValue.serverTimestamp(),
       });
     }
+  }
+
+  /// Removes a package from a batch and reverts its status to transit.
+  Future<void> removePackageFromBatch({
+    required String batchId,
+    required String packageId,
+    required String adminEmail,
+  }) async {
+    final writeBatch = _firestore.batch();
+
+    // Remove packageId from batch's array
+    writeBatch.update(_batchesRef.doc(batchId), {
+      'packageIds': FieldValue.arrayRemove([packageId]),
+    });
+
+    // Reset package: clear batchId, revert status to transit
+    final pkgRef = _packagesRef.doc(packageId);
+    writeBatch.update(pkgRef, {
+      'batchId': null,
+      'currentStatus': PackageStatus.transit.value,
+      'updatedBy': adminEmail,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    // Log status history
+    writeBatch.set(pkgRef.collection('statusHistory').doc(), {
+      'status': PackageStatus.transit.value,
+      'note': 'Paket dikeluarkan dari kontainer/box',
+      'updatedBy': adminEmail,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    await writeBatch.commit();
   }
 }

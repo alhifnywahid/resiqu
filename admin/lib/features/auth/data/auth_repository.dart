@@ -79,4 +79,29 @@ class AuthRepository {
       'addedAt': FieldValue.serverTimestamp(),
     });
   }
+
+  Future<void> updateAdmin(String oldEmail, {required String newEmail, required String newName}) async {
+    if (oldEmail == newEmail) {
+      // Same email, just update name
+      await _firestore.collection('admins').doc(oldEmail).update({
+        'name': newName,
+      });
+    } else {
+      // Email changed: copy to new doc, delete old doc
+      final oldDoc = await _safeGetDoc(_firestore.collection('admins').doc(oldEmail));
+      final oldData = oldDoc.data() as Map<String, dynamic>? ?? {};
+
+      final writeBatch = _firestore.batch();
+      writeBatch.set(_firestore.collection('admins').doc(newEmail), {
+        ...oldData,
+        'name': newName,
+      });
+      writeBatch.delete(_firestore.collection('admins').doc(oldEmail));
+      await writeBatch.commit();
+    }
+  }
+
+  Future<void> deleteAdmin(String email) async {
+    await _firestore.collection('admins').doc(email).delete();
+  }
 }

@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/constants/package_status.dart';
 import '../../../../core/utils/app_alerts.dart';
@@ -9,6 +10,8 @@ import '../../data/batch_repository.dart';
 import '../../domain/batch_model.dart';
 
 class BatchController extends GetxController {
+  static const _filterKey = 'batch_status_filter';
+
   final BatchRepository _batchRepo = Get.find<BatchRepository>();
   final PackageRepository _pkgRepo = Get.find<PackageRepository>();
 
@@ -45,6 +48,25 @@ class BatchController extends GetxController {
   void onInit() {
     super.onInit();
     _listenToBatches();
+    _loadSavedFilter();
+    ever(selectedStatusFilter, _saveFilter);
+  }
+
+  Future<void> _loadSavedFilter() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(_filterKey);
+    if (saved != null) {
+      selectedStatusFilter.value = saved;
+    }
+  }
+
+  void _saveFilter(String? value) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (value == null) {
+      await prefs.remove(_filterKey);
+    } else {
+      await prefs.setString(_filterKey, value);
+    }
   }
 
   void _listenToBatches() {
@@ -166,6 +188,23 @@ class BatchController extends GetxController {
         packageIds: batch.packageIds,
         adminEmail: _adminEmail,
       );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<bool> removePackageFromBatch(String batchId, String packageId) async {
+    isLoading.value = true;
+    try {
+      await _batchRepo.removePackageFromBatch(
+        batchId: batchId,
+        packageId: packageId,
+        adminEmail: _adminEmail,
+      );
+      return true;
+    } catch (e) {
+      AppAlerts.error('Gagal mengeluarkan paket: $e');
+      return false;
     } finally {
       isLoading.value = false;
     }

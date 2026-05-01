@@ -565,13 +565,48 @@ class _BatchDetailPageState extends State<BatchDetailPage> {
               ),
             )
           else
-            ...packages.map((pkg) => _PackageCard(
-                  pkg: pkg,
-                  onTap: () {
-                    Get.find<PackageController>().loadPackageDetail(pkg.id);
-                    Get.toNamed(AppRoutes.packageDetail, arguments: pkg.id);
-                  },
-                )),
+            ...packages.map((pkg) {
+              final card = _PackageCard(
+                pkg: pkg,
+                onTap: () {
+                  Get.find<PackageController>().loadPackageDetail(pkg.id);
+                  Get.toNamed(AppRoutes.packageDetail, arguments: pkg.id);
+                },
+              );
+
+              if (batch.status != BatchStatus.collecting) return card;
+
+              return Dismissible(
+                key: ValueKey(pkg.id),
+                direction: DismissDirection.endToStart,
+                confirmDismiss: (_) => _confirmRemovePackage(pkg),
+                background: Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.only(right: 20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEF4444),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  alignment: Alignment.centerRight,
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.logout_rounded, color: Colors.white, size: 18),
+                      SizedBox(width: 6),
+                      Text(
+                        'Keluarkan',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                child: card,
+              );
+            }),
         ],
       ),
     );
@@ -593,6 +628,109 @@ class _BatchDetailPageState extends State<BatchDetailPage> {
         await _loadPackages();
       },
     );
+  }
+
+  Future<bool> _confirmRemovePackage(PackageModel pkg) async {
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 48,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(2.5),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEF4444).withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.logout_rounded, size: 36, color: Color(0xFFEF4444)),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Keluarkan Paket?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1E293B),
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Paket "${pkg.trackingCode}" akan dikeluarkan dari box "${batch.name}".\nStatus paket akan dikembalikan ke "Transit".',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF64748B),
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        foregroundColor: const Color(0xFF475569),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Batal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFEF4444),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shadowColor: const Color(0xFFEF4444).withValues(alpha: 0.5),
+                      ),
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Keluarkan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      final success = await _batchCtrl.removePackageFromBatch(batch.id, pkg.id);
+      if (success) {
+        AppAlerts.success('Paket ${pkg.trackingCode} berhasil dikeluarkan dari box');
+        await _loadPackages();
+      }
+    }
+    return false; // Never auto-dismiss; we reload the list
   }
 
   void _confirmArrive(BuildContext context) {
