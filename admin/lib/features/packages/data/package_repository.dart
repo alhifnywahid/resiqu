@@ -39,7 +39,9 @@ class PackageRepository {
     final normalizedCode = trackingCode.trim().toUpperCase();
     final docRef = _packagesRef.doc();
 
-    final status = PackageStatus.transit.value;
+    final status = batchId != null
+        ? PackageStatus.inBox.value
+        : PackageStatus.transit.value;
 
     final packageData = {
       'trackingCode': normalizedCode,

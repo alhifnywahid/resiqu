@@ -71,7 +71,7 @@ class BatchListPage extends GetView<BatchController> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    'Box Pengiriman',
+                    'Kontainer',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 25,

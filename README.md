@@ -9,7 +9,7 @@ Sistem tracking paket transit antar pulau untuk jasa pengiriman. Terdiri dari ap
 | Project  | Stack                          | Deskripsi                                     |
 | -------- | ------------------------------ | --------------------------------------------- |
 | `admin/` | Flutter · GetX · Firebase      | Aplikasi admin untuk kelola paket & kontainer |
-| `buyer/` | Next.js · shadcn/ui · Firebase | Website publik untuk lacak paket              |
+| `buyer/` | Next.js · Tailwind CSS · Firebase | Website publik untuk lacak paket              |
 
 ## Arsitektur
 
@@ -112,12 +112,15 @@ resiqu/
 
 ### Admin App
 
-- ✅ Login via Google (allowlist Firestore)
+- ✅ Login via Google (allowlist Firestore, hanya @gmail.com)
 - ✅ Dashboard ringkasan status paket
 - ✅ CRUD paket dengan auto-generate kode `RSQ-YYYYMMDD-XXXXXX`
 - ✅ Pengelompokan paket per nama penerima
 - ✅ Barcode/QR scanner dengan flashlight toggle
-- ✅ Manajemen kontainer/box (buat, isi paket, dispatch, arrive)
+- ✅ Manajemen kontainer/box (buat, isi paket, dispatch, arrive, hapus)
+- ✅ Hapus kontainer dengan cascade release paket ke status transit
+- ✅ Validasi: kontainer kosong tidak bisa dikirim
+- ✅ Validasi: tanggal terkunci setelah kontainer dikirim/tiba
 - ✅ Update status paket + riwayat lengkap
 - ✅ Export ke Excel & PDF
 - ✅ Share via WhatsApp
@@ -135,7 +138,8 @@ Diterima → Dalam Box → Dalam Perjalanan → Tiba di Tujuan → Selesai
 - ✅ Lacak paket publik via tracking code / resi marketplace
 - ✅ Timeline status lengkap dengan waktu
 - ✅ Info kontainer terbuka (jadwal transit)
-- ✅ Responsive design + dark mode
+- ✅ Desain Starbucks-inspired (warm cream canvas, green system)
+- ✅ Responsive design
 - ✅ SEO-optimized
 
 ---
@@ -154,7 +158,7 @@ share_plus, connectivity_plus, intl, uuid
 
 ```
 next, react, firebase, date-fns
-tailwindcss, shadcn/ui, lucide-react
+tailwindcss v4
 ```
 
 ---

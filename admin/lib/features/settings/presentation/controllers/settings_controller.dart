@@ -30,6 +30,11 @@ class SettingsController extends GetxController {
       return;
     }
 
+    if (!email.toLowerCase().endsWith('@gmail.com')) {
+      AppAlerts.error('Hanya email @gmail.com yang diperbolehkan');
+      return;
+    }
+
     if (adminList.any((a) => a['email'] == email)) {
       AppAlerts.info('Email sudah terdaftar sebagai admin');
       return;
@@ -50,6 +55,11 @@ class SettingsController extends GetxController {
   Future<void> updateAdmin(String oldEmail, {required String newEmail, required String newName}) async {
     if (newEmail.isEmpty || !GetUtils.isEmail(newEmail)) {
       AppAlerts.error('Format email tidak valid');
+      return;
+    }
+
+    if (!newEmail.toLowerCase().endsWith('@gmail.com')) {
+      AppAlerts.error('Hanya email @gmail.com yang diperbolehkan');
       return;
     }
 

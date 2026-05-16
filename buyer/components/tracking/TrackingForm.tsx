@@ -3,9 +3,6 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-
 export function TrackingForm() {
   const router = useRouter()
   const [code, setCode] = useState('')
@@ -26,33 +23,33 @@ export function TrackingForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex w-full flex-col gap-3">
-      <div className="flex gap-2">
-        <Input
+      <div className="flex gap-3">
+        <input
           id="tracking-code-input"
           value={code}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCode(e.target.value)}
+          onChange={(e) => setCode(e.target.value)}
           placeholder="Masukkan nomor resi atau kode RSQ-..."
-          className="h-10 flex-1 text-sm bg-white dark:bg-slate-900"
+          className="h-12 flex-1 rounded-4xl border border-[#edebe9] bg-[#f9f9f9] px-5 text-sm font-medium text-[rgba(0,0,0,0.87)] outline-none transition-all duration-200 placeholder:text-[rgba(0,0,0,0.38)] focus:border-primary focus:ring-2 focus:ring-[#d4e9e2]"
           aria-label="Nomor resi atau kode tracking"
           disabled={loading}
         />
-        <Button
+        <button
           type="submit"
-          className="h-10 px-4 bg-blue-600 hover:bg-blue-700 text-white"
+          className="h-12 rounded-4xl border border-primary bg-primary px-6 text-sm font-semibold text-white transition-all duration-200 hover:bg-accent hover:border-accent active:scale-95 disabled:opacity-60"
           disabled={loading}
         >
           {loading ? (
-            <span className="flex items-center gap-2 text-sm">
+            <span className="flex items-center gap-2">
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
               Mencari
             </span>
           ) : (
             'Lacak'
           )}
-        </Button>
+        </button>
       </div>
       {error && (
-        <p className="text-xs text-red-500" role="alert">
+        <p className="text-xs font-medium text-destructive" role="alert">
           {error}
         </p>
       )}

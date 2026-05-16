@@ -3,10 +3,13 @@ import 'package:get/get.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/package_status.dart';
+import '../../../../core/routes/app_routes.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/export_service.dart';
 import '../../../../core/utils/app_alerts.dart';
 import '../../../../shared/widgets/status_badge.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../batches/data/batch_repository.dart';
 import '../../../batches/presentation/controllers/batch_controller.dart';
 import '../../../batches/domain/batch_model.dart';
 import '../../../settings/presentation/controllers/settings_controller.dart';
@@ -730,23 +733,63 @@ class PackageDetailPage extends GetView<PackageController> {
     );
   }
 
-  void _confirmDeletePackage(BuildContext context, dynamic pkg) {
+  void _confirmDeletePackage(BuildContext context, dynamic pkg) async {
+    // Check if this is the last package in a dispatched/arrived container
+    String? batchWarning;
+    bool willDeleteBatch = false;
+    BatchModel? parentBatch;
+
+    if (pkg.batchId != null && pkg.batchId.isNotEmpty) {
+      try {
+        final batchRepo = Get.find<BatchRepository>();
+        parentBatch = await batchRepo.getBatchById(pkg.batchId);
+        if (parentBatch != null &&
+            parentBatch.status != BatchStatus.collecting &&
+            parentBatch.packageIds.length == 1 &&
+            parentBatch.packageIds.contains(pkg.id)) {
+          willDeleteBatch = true;
+          batchWarning =
+              'Ini adalah paket terakhir di kontainer "${parentBatch.name}". '
+              'Jika Anda menghapus paket ini, kontainer juga akan ikut terhapus.';
+        }
+      } catch (_) {}
+    }
+
+    if (!context.mounted) return;
+
     AppAlerts.confirmSheet(
       context: context,
-      title: 'Hapus Paket',
-      description: 'Yakin ingin menghapus paket "${pkg.trackingCode}"? Data riwayat juga akan dihapus dan tidak dapat dikembalikan.',
-      confirmLabel: 'Hapus',
+      title: willDeleteBatch ? 'Hapus Paket & Kontainer' : 'Hapus Paket',
+      description: willDeleteBatch
+          ? '$batchWarning\n\nData riwayat paket juga akan dihapus dan tidak dapat dikembalikan.'
+          : 'Yakin ingin menghapus paket "${pkg.trackingCode}"? Data riwayat juga akan dihapus dan tidak dapat dikembalikan.',
+      confirmLabel: willDeleteBatch ? 'Hapus Semua' : 'Hapus',
       confirmColor: const Color(0xFFEF4444),
-      icon: Icons.delete_outline_rounded,
+      icon: willDeleteBatch ? Icons.warning_amber_rounded : Icons.delete_outline_rounded,
       iconColor: const Color(0xFFEF4444),
       onConfirm: () async {
         try {
           await controller.deletePackage(pkg.id, batchId: pkg.batchId);
-          // Navigate back FIRST, then show success alert
-          Get.back();
-          Future.delayed(const Duration(milliseconds: 200), () {
-            AppAlerts.success('Paket berhasil dihapus');
-          });
+
+          if (willDeleteBatch && parentBatch != null) {
+            // Delete the now-empty container
+            final batchRepo = Get.find<BatchRepository>();
+            await batchRepo.deleteBatch(
+              batchId: parentBatch.id,
+              packageIds: [], // already empty after package deletion
+              adminEmail: Get.find<AuthController>().adminEmail,
+            );
+            // Navigate back to batch list (pop both package detail and batch detail)
+            Get.until((route) => route.settings.name == AppRoutes.shell || route.isFirst);
+            Future.delayed(const Duration(milliseconds: 200), () {
+              AppAlerts.success('Paket dan kontainer "${parentBatch!.name}" berhasil dihapus');
+            });
+          } else {
+            Get.back();
+            Future.delayed(const Duration(milliseconds: 200), () {
+              AppAlerts.success('Paket berhasil dihapus');
+            });
+          }
         } catch (e) {
           AppAlerts.error(e.toString(), title: 'Gagal Menghapus');
         }

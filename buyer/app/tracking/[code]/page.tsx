@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { notFound } from "next/navigation"
 import { format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 
@@ -9,7 +8,6 @@ import { TrackingForm } from "@/components/tracking/TrackingForm"
 import { ShareButton } from "@/components/tracking/ShareButton"
 import { TrackingTimeline } from "@/components/tracking/TrackingTimeline"
 import { findPackageByCode } from "@/services/package-service"
-import { Button } from "@/components/ui/button"
 
 interface Props {
   params: Promise<{ code: string }>
@@ -30,21 +28,29 @@ export default async function TrackingPage({ params }: Props) {
 
   if (!result) {
     return (
-      <main className="flex min-h-svh flex-col items-center justify-center px-4 py-16 bg-slate-50 dark:bg-slate-950">
+      <main className="flex min-h-svh flex-col items-center justify-center bg-background px-4 py-16">
         <div className="w-full max-w-lg space-y-6 text-center">
-          <span className="text-5xl">🔍</span>
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#d4e9e2]">
+            <svg className="w-8 h-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+          </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Paket tidak ditemukan</h1>
-            <p className="mt-2 text-slate-500 dark:text-slate-400">
+            <h1 className="text-2xl font-semibold text-accent">
+              Paket tidak ditemukan
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
               Nomor resi atau kode tracking{" "}
-              <code className="rounded bg-slate-200 px-1 py-0.5 text-sm dark:bg-slate-800">
+              <code className="rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-[rgba(0,0,0,0.87)]">
                 {decodedCode}
               </code>{" "}
               tidak ditemukan dalam sistem.
             </p>
           </div>
           <Link href="/">
-            <Button variant="outline" className="bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800">← Coba Kode Lain</Button>
+            <button className="mt-4 rounded-4xl border border-primary bg-transparent px-5 py-2 text-sm font-semibold text-primary transition-all duration-200 hover:bg-[#d4e9e2] active:scale-95">
+              ← Coba Kode Lain
+            </button>
           </Link>
         </div>
       </main>
@@ -54,18 +60,18 @@ export default async function TrackingPage({ params }: Props) {
   const { package: pkg, statusHistory } = result
 
   return (
-    <main className="min-h-svh bg-slate-50 px-4 py-8 dark:bg-slate-950">
+    <main className="min-h-svh bg-background px-4 py-8">
       <div className="mx-auto max-w-lg space-y-6">
-        {/* Back + Search + Share */}
+        {/* Back + Brand + Share */}
         <div className="flex items-center justify-between">
           <Link
             href="/"
-            className="text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+            className="text-sm font-semibold text-primary transition-colors hover:text-accent"
           >
             ← Kembali
           </Link>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-slate-900 dark:text-white">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-semibold text-accent">
               ResiQu
             </span>
             <ShareButton code={pkg.trackingCode} />
@@ -73,33 +79,33 @@ export default async function TrackingPage({ params }: Props) {
         </div>
 
         {/* Status Card */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="rounded-xl bg-white p-5 shadow-[0px_0px_0.5px_0px_rgba(0,0,0,0.14),0px_1px_1px_0px_rgba(0,0,0,0.24)]">
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Kode Tracking</p>
-              <p className="font-mono text-sm font-semibold text-slate-900 dark:text-white">
+              <p className="text-xs font-medium text-muted-foreground">Kode Tracking</p>
+              <p className="font-mono text-sm font-semibold text-[rgba(0,0,0,0.87)]">
                 {pkg.trackingCode}
               </p>
             </div>
             <StatusBadge status={pkg.currentStatus} />
           </div>
 
-          <div className="grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
+          <div className="grid grid-cols-2 gap-3 border-t border-secondary pt-4">
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Penerima</p>
-              <p className="text-sm font-medium text-slate-900 dark:text-white">{pkg.recipientName}</p>
+              <p className="text-xs font-medium text-muted-foreground">Penerima</p>
+              <p className="text-sm font-semibold text-[rgba(0,0,0,0.87)]">{pkg.recipientName}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Tujuan</p>
-              <p className="text-sm font-medium text-slate-900 dark:text-white">{pkg.destinationCity}</p>
+              <p className="text-xs font-medium text-muted-foreground">Tujuan</p>
+              <p className="text-sm font-semibold text-[rgba(0,0,0,0.87)]">{pkg.destinationCity}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Resi Marketplace</p>
-              <p className="font-mono text-sm text-slate-700 dark:text-slate-300">{pkg.marketplaceResi || '-'}</p>
+              <p className="text-xs font-medium text-muted-foreground">Resi Marketplace</p>
+              <p className="font-mono text-sm text-[rgba(0,0,0,0.87)]">{pkg.marketplaceResi || '-'}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Terakhir Diupdate</p>
-              <p className="text-sm text-slate-700 dark:text-slate-300">
+              <p className="text-xs font-medium text-muted-foreground">Terakhir Diupdate</p>
+              <p className="text-sm text-[rgba(0,0,0,0.87)]">
                 {format(pkg.updatedAt, "dd MMM yyyy", { locale: idLocale })}
               </p>
             </div>
@@ -108,15 +114,17 @@ export default async function TrackingPage({ params }: Props) {
 
         {/* Timeline */}
         {statusHistory.length > 0 && (
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <h2 className="mb-4 text-sm font-semibold text-slate-900 dark:text-white">Riwayat Status</h2>
+          <div className="rounded-xl bg-white p-5 shadow-[0px_0px_0.5px_0px_rgba(0,0,0,0.14),0px_1px_1px_0px_rgba(0,0,0,0.24)]">
+            <h2 className="mb-4 text-sm font-semibold text-accent">
+              Riwayat Status
+            </h2>
             <TrackingTimeline history={statusHistory} />
           </div>
         )}
 
         {/* Search Again */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <p className="mb-3 text-sm font-medium text-slate-900 dark:text-white">Lacak paket lain</p>
+        <div className="rounded-xl bg-white p-5 shadow-[0px_0px_0.5px_0px_rgba(0,0,0,0.14),0px_1px_1px_0px_rgba(0,0,0,0.24)]">
+          <p className="mb-3 text-sm font-semibold text-[rgba(0,0,0,0.87)]">Lacak paket lain</p>
           <TrackingForm />
         </div>
       </div>

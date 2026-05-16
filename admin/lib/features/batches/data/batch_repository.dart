@@ -258,4 +258,48 @@ class BatchRepository {
 
     await writeBatch.commit();
   }
+
+  /// Deletes a batch and releases all packages inside.
+  /// Only allowed when batch status is 'collecting'.
+  Future<void> deleteBatch({
+    required String batchId,
+    required List<String> packageIds,
+    required String adminEmail,
+  }) async {
+    // Verify batch is in collecting status
+    final batchDoc = await _safeGetDoc(_batchesRef.doc(batchId));
+    if (!batchDoc.exists) throw Exception('Kontainer tidak ditemukan');
+
+    final data = batchDoc.data() as Map<String, dynamic>;
+    final status = data['status'] as String? ?? '';
+    if (status == 'dispatched' || status == 'arrived') {
+      throw Exception('Kontainer yang sudah dikirim atau tiba tidak bisa dihapus');
+    }
+
+    final writeBatch = _firestore.batch();
+
+    // Release all packages: revert to transit, clear batchId
+    for (final pkgId in packageIds) {
+      final pkgRef = _packagesRef.doc(pkgId);
+      writeBatch.update(pkgRef, {
+        'batchId': null,
+        'currentStatus': PackageStatus.transit.value,
+        'updatedBy': adminEmail,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Log status history
+      writeBatch.set(pkgRef.collection('statusHistory').doc(), {
+        'status': PackageStatus.transit.value,
+        'note': 'Paket dikeluarkan karena kontainer dihapus',
+        'updatedBy': adminEmail,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    }
+
+    // Delete the batch document
+    writeBatch.delete(_batchesRef.doc(batchId));
+
+    await writeBatch.commit();
+  }
 }

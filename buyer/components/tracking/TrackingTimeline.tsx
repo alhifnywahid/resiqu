@@ -3,7 +3,6 @@ import { id as idLocale } from 'date-fns/locale'
 
 import type { StatusHistory } from '@/types'
 import { PackageStatusLabel } from '@/types'
-import { cn } from '@/lib/utils'
 
 interface TrackingTimelineProps {
   history: StatusHistory[]
@@ -22,34 +21,32 @@ export function TrackingTimeline({ history }: TrackingTimelineProps) {
             {/* Timeline connector */}
             <div className="flex flex-col items-center">
               <div
-                className={cn(
-                  'mt-1 h-3 w-3 shrink-0 rounded-full border-2',
+                className={`mt-1 h-3 w-3 shrink-0 rounded-full border-2 ${
                   isFirst
-                    ? 'border-blue-600 bg-blue-600 dark:border-blue-500 dark:bg-blue-500'
-                    : 'border-slate-300 bg-slate-50 dark:border-slate-600 dark:bg-slate-800'
-                )}
+                    ? 'border-primary bg-primary'
+                    : 'border-[#edebe9] bg-[#f9f9f9]'
+                }`}
               />
               {!isLast && (
-                <div className="my-1 w-0.5 flex-1 bg-slate-200 dark:bg-slate-800" />
+                <div className="my-1 w-0.5 flex-1 bg-[#edebe9]" />
               )}
             </div>
 
             {/* Content */}
-            <div className={cn('pb-6', isLast && 'pb-0')}>
+            <div className={isLast ? 'pb-0' : 'pb-6'}>
               <p
-                className={cn(
-                  'text-sm font-semibold',
-                  isFirst ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'
-                )}
+                className={`text-sm font-semibold ${
+                  isFirst ? 'text-accent' : 'text-muted-foreground'
+                }`}
               >
                 {PackageStatusLabel[item.status]}
               </p>
               {item.note && (
-                <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                <p className="mt-0.5 text-sm text-muted-foreground">
                   {item.note}
                 </p>
               )}
-              <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+              <p className="mt-1 text-xs text-[rgba(0,0,0,0.38)]">
                 {format(item.timestamp, 'dd MMM yyyy, HH:mm', {
                   locale: idLocale,
                 })}

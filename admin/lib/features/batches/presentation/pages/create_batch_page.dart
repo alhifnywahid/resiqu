@@ -21,6 +21,7 @@ class _CreateBatchPageState extends State<CreateBatchPage> {
   
   DateTime? startDate;
   DateTime? expiryDate;
+  bool isDateLocked = false;
   
   late final BatchController controller;
   final _dateFormat = DateFormat('dd MMMM yyyy', 'id');
@@ -38,6 +39,8 @@ class _CreateBatchPageState extends State<CreateBatchPage> {
       cityCtrl.text = batchToEdit!.destinationCity;
       startDate = batchToEdit!.startDate;
       expiryDate = batchToEdit!.expiryDate;
+      // Lock dates if batch is already dispatched or arrived
+      isDateLocked = batchToEdit!.status != BatchStatus.collecting;
     }
   }
 
@@ -407,59 +410,68 @@ class _CreateBatchPageState extends State<CreateBatchPage> {
         : 'Pilih rentang waktu (Mulai - Berakhir)';
 
     return GestureDetector(
-      onTap: _pickDateRange,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: const Color(0xFFCBD5E1),
-            width: 1,
+      onTap: isDateLocked ? null : _pickDateRange,
+      child: Opacity(
+        opacity: isDateLocked ? 0.6 : 1.0,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          decoration: BoxDecoration(
+            color: isDateLocked ? const Color(0xFFF1F5F9) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: const Color(0xFFCBD5E1),
+              width: 1,
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(12),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  isDateLocked ? Icons.lock_rounded : Icons.date_range_rounded,
+                  color: isDateLocked ? const Color(0xFF94A3B8) : const Color(0xFF3B82F6),
+                  size: 22,
+                ),
               ),
-              child: const Icon(Icons.date_range_rounded, color: Color(0xFF3B82F6), size: 22),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Rentang Waktu Box',
-                    style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    text,
-                    style: TextStyle(
-                      color: hasDate ? const Color(0xFF1E293B) : const Color(0xFF94A3B8),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isDateLocked ? 'Rentang Waktu Box (Terkunci)' : 'Rentang Waktu Box',
+                      style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      text,
+                      style: TextStyle(
+                        color: hasDate ? const Color(0xFF1E293B) : const Color(0xFF94A3B8),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            if (hasDate)
-              GestureDetector(
-                onTap: () => setState(() {
-                  startDate = null;
-                  expiryDate = null;
-                }),
-                child: const Icon(Icons.close_rounded, color: Color(0xFF94A3B8), size: 20),
-              )
-            else
-              const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8), size: 20),
-          ],
+              if (isDateLocked)
+                const Icon(Icons.lock_outline_rounded, color: Color(0xFF94A3B8), size: 20)
+              else if (hasDate)
+                GestureDetector(
+                  onTap: () => setState(() {
+                    startDate = null;
+                    expiryDate = null;
+                  }),
+                  child: const Icon(Icons.close_rounded, color: Color(0xFF94A3B8), size: 20),
+                )
+              else
+                const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8), size: 20),
+            ],
+          ),
         ),
       ),
     );

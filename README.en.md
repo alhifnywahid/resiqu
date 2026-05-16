@@ -9,7 +9,7 @@ Inter-island package transit tracking system for shipping services. Consists of 
 | Project  | Stack                          | Description                              |
 | -------- | ------------------------------ | ---------------------------------------- |
 | `admin/` | Flutter · GetX · Firebase      | Admin app for managing packages & batches |
-| `buyer/` | Next.js · shadcn/ui · Firebase | Public website for package tracking       |
+| `buyer/` | Next.js · Tailwind CSS · Firebase | Public website for package tracking       |
 
 ## Architecture
 
@@ -112,12 +112,15 @@ resiqu/
 
 ### Admin App
 
-- ✅ Google login (Firestore allowlist)
+- ✅ Google login (Firestore allowlist, @gmail.com only)
 - ✅ Package status dashboard summary
 - ✅ CRUD packages with auto-generated code `RSQ-YYYYMMDD-XXXXXX`
 - ✅ Group packages by recipient name
 - ✅ Barcode/QR scanner with flashlight toggle
-- ✅ Batch/container management (create, fill, dispatch, arrive)
+- ✅ Batch/container management (create, fill, dispatch, arrive, delete)
+- ✅ Delete container with cascade release of packages to transit status
+- ✅ Validation: empty containers cannot be dispatched
+- ✅ Validation: date fields locked after container is dispatched/arrived
 - ✅ Update package status + full history
 - ✅ Export to Excel & PDF
 - ✅ Share via WhatsApp
@@ -135,7 +138,8 @@ Received → In Container → In Transit → Arrived at Destination → Complete
 - ✅ Track packages via tracking code / marketplace receipt
 - ✅ Full status timeline with timestamps
 - ✅ Open container info (transit schedule)
-- ✅ Responsive design + dark mode
+- ✅ Starbucks-inspired design (warm cream canvas, green system)
+- ✅ Responsive design
 - ✅ SEO-optimized
 
 ---
@@ -154,7 +158,7 @@ share_plus, connectivity_plus, intl, uuid
 
 ```
 next, react, firebase, date-fns
-tailwindcss, shadcn/ui, lucide-react
+tailwindcss v4
 ```
 
 ---

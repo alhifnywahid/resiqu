@@ -1,33 +1,38 @@
 import { PackageStatus, PackageStatusLabel } from '@/types'
-import { cn } from '@/lib/utils'
 
 const statusConfig: Record<
   PackageStatus,
-  { color: string; dot: string }
+  { bg: string; text: string; dot: string }
 > = {
   diterima: {
-    color: 'bg-blue-100 text-blue-700 border-blue-200',
-    dot: 'bg-blue-500',
+    bg: 'bg-[#d4e9e2]',
+    text: 'text-[#006241]',
+    dot: 'bg-[#00754A]',
   },
   dalam_box: {
-    color: 'bg-purple-100 text-purple-700 border-purple-200',
-    dot: 'bg-purple-500',
+    bg: 'bg-[#ede9fe]',
+    text: 'text-[#5b21b6]',
+    dot: 'bg-[#7c3aed]',
   },
   dalam_perjalanan: {
-    color: 'bg-indigo-100 text-indigo-700 border-indigo-200',
-    dot: 'bg-indigo-500',
+    bg: 'bg-[#dbeafe]',
+    text: 'text-[#1e40af]',
+    dot: 'bg-[#2563eb]',
   },
   tiba_di_tujuan: {
-    color: 'bg-teal-100 text-teal-700 border-teal-200',
-    dot: 'bg-teal-500',
+    bg: 'bg-[#d4e9e2]',
+    text: 'text-[#1E3932]',
+    dot: 'bg-[#2b5148]',
   },
   selesai: {
-    color: 'bg-green-100 text-green-700 border-green-200',
-    dot: 'bg-green-500',
+    bg: 'bg-[#d4e9e2]',
+    text: 'text-[#006241]',
+    dot: 'bg-[#00754A]',
   },
   kendala: {
-    color: 'bg-red-100 text-red-700 border-red-200',
-    dot: 'bg-red-500',
+    bg: 'bg-[#fee2e2]',
+    text: 'text-[#991b1b]',
+    dot: 'bg-[#c82014]',
   },
 }
 
@@ -42,13 +47,11 @@ export function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {
 
   return (
     <span
-      className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border font-medium',
-        config.color,
-        size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm'
-      )}
+      className={`inline-flex items-center gap-1.5 rounded-full font-semibold ${config.bg} ${config.text} ${
+        size === 'sm' ? 'px-2 py-0.5 text-[11px]' : 'px-3 py-1 text-[13px]'
+      }`}
     >
-      <span className={cn('h-1.5 w-1.5 rounded-full', config.dot)} />
+      <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`} />
       {label}
     </span>
   )

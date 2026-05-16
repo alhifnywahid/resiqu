@@ -151,7 +151,7 @@ class SettingsPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'User',
+                'Admin',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 25,

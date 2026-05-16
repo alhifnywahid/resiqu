@@ -209,4 +209,26 @@ class BatchController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  Future<bool> deleteBatch(BatchModel batch) async {
+    if (batch.status != BatchStatus.collecting) {
+      AppAlerts.error('Kontainer yang sudah dikirim atau tiba tidak bisa dihapus');
+      return false;
+    }
+
+    isLoading.value = true;
+    try {
+      await _batchRepo.deleteBatch(
+        batchId: batch.id,
+        packageIds: batch.packageIds,
+        adminEmail: _adminEmail,
+      );
+      return true;
+    } catch (e) {
+      AppAlerts.error('Gagal menghapus kontainer: $e');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
 }

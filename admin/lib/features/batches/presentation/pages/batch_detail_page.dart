@@ -223,6 +223,18 @@ class _BatchDetailPageState extends State<BatchDetailPage> {
                   ),
                 ),
                 const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => _confirmDeleteBatch(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEF4444).withValues(alpha: 0.3),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.delete_outline_rounded, color: Colors.white, size: 20),
+                  ),
+                ),
+                const SizedBox(width: 8),
               ],
               GestureDetector(
                 onTap: () => _showExportFormatSheet(context),
@@ -570,7 +582,7 @@ class _BatchDetailPageState extends State<BatchDetailPage> {
                 pkg: pkg,
                 onTap: () {
                   Get.find<PackageController>().loadPackageDetail(pkg.id);
-                  Get.toNamed(AppRoutes.packageDetail, arguments: pkg.id);
+                  Get.toNamed(AppRoutes.packageDetail, arguments: pkg.id)?.then((_) => _loadPackages());
                 },
               );
 
@@ -617,6 +629,10 @@ class _BatchDetailPageState extends State<BatchDetailPage> {
   // ───────────────────────────────────────────────
   void _confirmDispatch(BuildContext context) {
     if (batch.status != BatchStatus.collecting) return;
+    if (batch.packageIds.isEmpty) {
+      AppAlerts.error('Tidak bisa mengirim kontainer kosong. Tambahkan paket terlebih dahulu.');
+      return;
+    }
     AppAlerts.confirmSheet(
       context: context,
       title: 'Kirim Box?',
@@ -746,6 +762,114 @@ class _BatchDetailPageState extends State<BatchDetailPage> {
       onConfirm: () async {
         await _batchCtrl.arriveBatch(batch);
         await _loadPackages();
+      },
+    );
+  }
+
+  void _confirmDeleteBatch(BuildContext context) {
+    if (batch.status != BatchStatus.collecting) return;
+
+    final packageCount = batch.packageIds.length;
+    final hasPackages = packageCount > 0;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 48,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(2.5),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEF4444).withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.delete_forever_rounded, size: 36, color: Color(0xFFEF4444)),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Hapus Kontainer?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1E293B),
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                hasPackages
+                    ? 'Kontainer "${batch.name}" akan dihapus.\n$packageCount paket di dalamnya akan dikeluarkan dan dikembalikan ke status "Transit".'
+                    : 'Kontainer "${batch.name}" akan dihapus secara permanen.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF64748B),
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        foregroundColor: const Color(0xFF475569),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Batal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFEF4444),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shadowColor: const Color(0xFFEF4444).withValues(alpha: 0.5),
+                      ),
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+                        final success = await _batchCtrl.deleteBatch(batch);
+                        if (success) {
+                          Get.back();
+                          AppAlerts.success('Kontainer "${batch.name}" berhasil dihapus');
+                        }
+                      },
+                      child: const Text('Hapus', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
       },
     );
   }
